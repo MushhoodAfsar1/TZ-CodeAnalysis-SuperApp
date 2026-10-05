@@ -30,5 +30,7 @@ Backend IDs stay as published: `BE-API-<SERVICE>-###`.
 ## Match
 `matched` · `path-only` · `contract-mismatch` · `fe-only` · `be-only` · `unknown`.
 
+`matched` and `contract-mismatch` require a written diff (see `contracts/`). A path hit alone stays `path-only`.
+
 ## Redaction
 Field names, types, and sources only. No keys, tokens, real phone numbers, balances, or hostnames.

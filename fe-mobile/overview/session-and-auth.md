@@ -5,25 +5,21 @@ ids: [FE-SESSION]
 feature: session-and-auth
 fe_ref: main
 fe_sha: 6328b7254
+be_kb_sha: 0c13cc4
 updated: 2026-10-05
-confidence: partial
+confidence: confirmed
 ---
-# Session and auth (inventory notes only)
+# Session and auth
 
-Deep pass not done. These facts are only what the API methods themselves build. Controllers decide when they run.
+Traced at FE `6328b7254` against backend `0c13cc4`. Journey: [../flows/FLW-0002-consumer-login.md](../flows/FLW-0002-consumer-login.md). Refresh: [../flows/FLW-0001-session-refresh.md](../flows/FLW-0001-session-refresh.md). Field diff: [../contracts/session-auth-money.md](../contracts/session-auth-money.md).
 
-| Step | API | Path | Encrypted | Notes |
+| Step | API | Path | Match | Stored |
 |---|---|---|---|---|
-| Gateway token | `SessionNetworkManager.requestGenerateGateWayToken` | `POST oauth2/token` | no | `grant_type` client_credentials. `scope` is a random request reference, not an OAuth scope list. Wrapper: `ApiManager.requestGenerateGateWayToken`. Seen from splash and `NetworkManager` |
-| Check auth | `ApiManager.requestToCheckAuthV1` | `POST accounts/api/Profile/CheckAuthV2` | yes | The method name says V1; the constant is `requestCheckAuthV2`. Use-case `UseCaseTypes.checkAuthSuccess`. `userCaseName` registration |
-| OTP request | `ApiManager.requestGetOTP` | `POST accounts/api/Otp/GenerateOtpV2` | yes | Optional `otpType`. **fe-only** — catalog has GenerateOtp / V1 / enc, not V2 |
-| OTP verify | `ApiManager.requestVerifyOTP` | `POST accounts/api/Otp/VerifyOtpV2` | yes | Body includes `otp`. Same V2 gap |
-| Login | `ApiManager.requestUserLogin` | `POST accounts/api/Profile/LoginProfile` | yes | `mpin`, `ismerchant=false`, `pushUpdateStatus`. Caller file: `common_api_functions.dart`. BE-API-ACCOUNT-002 path-only |
-| Merchant login | `ApiManager.requestMerchantLogin` | same LoginProfile path | yes | `ismerchant` from the argument (default true) |
-| Refresh | `ApiManager.requestRefreshLoginAuthToken` | `POST sessions/api/Account/refreshToken` | yes | Sends `accesstoken` and `refreshtoken` from `UserDataManager`. Invoked by wrapper `callRefreshLoginAuthToken`. BE-API-SESS-002 path-only |
-| Create PIN | `ApiManager.requestCreateUserPIN` | `POST accounts/1.0.0/api/profiles/creatempin` | yes | `new_mpin`. No caller file found. fe-only |
-| Pre-login config | `ApiManager.requestPreLoginConfigs` | `POST configuration/api/ConfigurationApp/get` | yes | BE-API-CONFIG-401 path-only |
+| Gateway token | API-0367 | `POST oauth2/token` | fe-only (not SESS-001) | Gateway `accessToken`, `expiresIn` |
+| Pre-login config | API-0007 | `POST configuration/api/ConfigurationApp/get` | path-only BE-API-CONFIG-401 | `isGuestModeEnabled`, `isMoreEnable` |
+| Check auth | API-0004 | `POST accounts/api/Profile/CheckAuthV2` | contract-mismatch BE-API-ACCOUNT-011 | Branches on `UM-Lo-01/04/12/16` |
+| OTP | API-0005, API-0006 | `GenerateOtpV2`, `VerifyOtpV2` | fe-only | Device registration, then login |
+| Login | API-0001 | `POST accounts/api/Profile/LoginProfile` | contract-mismatch BE-API-ACCOUNT-002 | `accessCode` as session JWT, `refreshToken`, expiry minutes |
+| Refresh | API-0003 | `POST sessions/api/Account/refreshToken` | contract-mismatch BE-API-SESS-002 | Replaces the same three values |
 
-Commented and unused: `requestToCheckAuth` (CheckAuth, not V2) is commented out. `UrlConstants.requestCheckAuth` is unused by a live call.
-
-Open: which screen calls login vs check-auth vs OTP, and what response fields are stored on `UserDataManager`. That is the next deep pass.
+The session JWT is the login `accessCode`, not a response from `POST /api/Account/auth`.

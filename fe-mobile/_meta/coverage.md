@@ -11,7 +11,7 @@ confidence: partial
 
 # Coverage
 
-FE `main` @ `6328b7254`. API inventory is done. No feature is `deep-analyzed`.
+FE `main` @ `6328b7254`. Backend KB `main` @ `0c13cc4`. API inventory is done. Session/auth and the primary send-money and agent cash-out paths are `deep-analyzed`. Other feature rows stay `not-started`.
 
 | Feature slug | FE paths (main) | Screens | APIs touched | Status | analyzed_sha | Updated | Notes |
 |---|---|---:|---:|---|---|---|---|
@@ -28,7 +28,7 @@ FE `main` @ `6328b7254`. API inventory is done. No feature is `deep-analyzed`.
 | `bus_ticketing` | `lib/ui/controllers/bus_ticketing/` | 0 | 6 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `card_theme` | `lib/ui/controllers/card_theme/` | 0 | 0 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `cardtheme` | `lib/ui/controllers/cardtheme/` | 0 | 0 | not-started | — | 2026-10-05 | Screen inventory not started. |
-| `cash_point` | `lib/ui/controllers/cash_point/` | 0 | 6 | not-started | — | 2026-10-05 | Screen inventory not started. |
+| `cash_point` | `lib/ui/controllers/cash_point/` | 2 | 6 | deep-analyzed | `6328b7254` | 2026-10-05 | SCR-0011–0012, FLW-0005. Consumer fee/payment matched. Merchant and Mchango branches named, contracts not re-diffed. |
 | `changeAccount` | `lib/ui/controllers/changeAccount/` | 0 | 2 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `chat_bot` | `lib/ui/controllers/chat_bot/` | 0 | 0 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `commonapis` | `lib/ui/controllers/commonapis/` | 0 | 4 | not-started | — | 2026-10-05 | Screen inventory not started. |
@@ -54,12 +54,12 @@ FE `main` @ `6328b7254`. API inventory is done. No feature is `deep-analyzed`.
 | `fiber` | `lib/ui/controllers/fiber/` | 0 | 3 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `financial_service` | `lib/ui/controllers/financial_service/` | 0 | 0 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `header` | `lib/ui/controllers/header/` | 0 | 0 | not-started | — | 2026-10-05 | Screen inventory not started. |
-| `homepage` | `lib/ui/controllers/homepage/` | 0 | 0 | not-started | — | 2026-10-05 | Screen inventory not started. |
+| `homepage` | `lib/ui/controllers/homepage/` | 1 | 0 | partial | `6328b7254` | 2026-10-05 | SCR-0001 session resume only. Other merchant-home APIs not traced. |
 | `insurance` | `lib/ui/controllers/insurance/` | 0 | 5 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `inviteearn` | `lib/ui/controllers/inviteearn/` | 0 | 4 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `invoice_management` | `lib/ui/controllers/invoice_management/` | 0 | 4 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `kikoba` | `lib/ui/controllers/kikoba/` | 0 | 28 | not-started | — | 2026-10-05 | Screen inventory not started. |
-| `login` | `lib/ui/controllers/login/` | 0 | 0 | not-started | — | 2026-10-05 | Screen inventory not started. |
+| `login` | `lib/ui/controllers/login/` | 1 | 1 | deep-analyzed | `6328b7254` | 2026-10-05 | SCR-0003, FLW-0002. Login call is API-0001 (caller file is controller_commons). |
 | `maps` | `lib/ui/controllers/maps/` | 0 | 1 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `mchango` | `lib/ui/controllers/mchango/` | 0 | 23 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `merchant` | `lib/ui/controllers/merchant/` | 0 | 1 | not-started | — | 2026-10-05 | Screen inventory not started. |
@@ -68,16 +68,16 @@ FE `main` @ `6328b7254`. API inventory is done. No feature is `deep-analyzed`.
 | `movie_tickets` | `lib/ui/controllers/movie_tickets/` | 0 | 8 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `myprofile` | `lib/ui/controllers/myprofile/` | 0 | 1 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `notification` | `lib/ui/controllers/notification/` | 0 | 0 | not-started | — | 2026-10-05 | Screen inventory not started. |
-| `onboarding` | `lib/ui/controllers/onboarding/` | 0 | 1 | not-started | — | 2026-10-05 | Screen inventory not started. |
-| `otp` | `lib/ui/controllers/otp/` | 0 | 2 | not-started | — | 2026-10-05 | Screen inventory not started. |
+| `onboarding` | `lib/ui/controllers/onboarding/` | 1 | 1 | deep-analyzed | `6328b7254` | 2026-10-05 | SCR-0005. API-0004 CheckAuthV2 contract-mismatch. |
+| `otp` | `lib/ui/controllers/otp/` | 1 | 2 | deep-analyzed | `6328b7254` | 2026-10-05 | SCR-0004. GenerateOtpV2 and VerifyOtpV2 stay fe-only. |
 | `permission_info` | `lib/ui/controllers/permission_info/` | 0 | 0 | not-started | — | 2026-10-05 | Screen inventory not started. |
-| `pinchanger` | `lib/ui/controllers/pinchanger/` | 0 | 3 | not-started | — | 2026-10-05 | Screen inventory not started. |
-| `pincode` | `lib/ui/controllers/pincode/` | 0 | 0 | not-started | — | 2026-10-05 | Screen inventory not started. |
+| `pinchanger` | `lib/ui/controllers/pinchanger/` | 1 | 3 | deep-analyzed | `6328b7254` | 2026-10-05 | Included in SCR-0008. Change PIN and reset PIN traced. Third API in the folder count not re-opened. |
+| `pincode` | `lib/ui/controllers/pincode/` | 0 | 0 | deep-analyzed | `6328b7254` | 2026-10-05 | PIN field helper only. Length 4. No API. |
 | `promotions` | `lib/ui/controllers/promotions/` | 0 | 0 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `qrscan` | `lib/ui/controllers/qrscan/` | 0 | 6 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `recent_and_favourites` | `lib/ui/controllers/recent_and_favourites/` | 0 | 5 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `registration_details` | `lib/ui/controllers/registration_details/` | 0 | 1 | not-started | — | 2026-10-05 | Screen inventory not started. |
-| `registration_onboarding` | `lib/ui/controllers/registration_onboarding/` | 0 | 8 | not-started | — | 2026-10-05 | Screen inventory not started. |
+| `registration_onboarding` | `lib/ui/controllers/registration_onboarding/` | 3 | 8 | partial | `6328b7254` | 2026-10-05 | FLW-0003 happy path. Biometric and micro-business branches not traced. API-0202 contract-mismatch. |
 | `request_to_pay` | `lib/ui/controllers/request_to_pay/` | 0 | 3 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `request_to_pay_consumer` | `lib/ui/controllers/request_to_pay_consumer/` | 0 | 3 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `sattlment` | `lib/ui/controllers/sattlment/` | 0 | 6 | not-started | — | 2026-10-05 | Screen inventory not started. |
@@ -85,10 +85,10 @@ FE `main` @ `6328b7254`. API inventory is done. No feature is `deep-analyzed`.
 | `search` | `lib/ui/controllers/search/` | 0 | 0 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `see_all_menu` | `lib/ui/controllers/see_all_menu/` | 0 | 0 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `selfcare` | `lib/ui/controllers/selfcare/` | 0 | 10 | not-started | — | 2026-10-05 | Screen inventory not started. |
-| `sendmoney` | `lib/ui/controllers/sendmoney/` | 0 | 15 | not-started | — | 2026-10-05 | Screen inventory not started. |
+| `sendmoney` | `lib/ui/controllers/sendmoney/` | 2 | 15 | partial | `6328b7254` | 2026-10-05 | FLW-0004 local P2P only. Gift, IMT, QR, and send-to-many not fully traced. |
 | `serviceclient` | `lib/ui/controllers/serviceclient/` | 0 | 0 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `sidemenu` | `lib/ui/controllers/sidemenu/` | 0 | 0 | not-started | — | 2026-10-05 | Screen inventory not started. |
-| `splash` | `lib/ui/controllers/splash/` | 0 | 3 | not-started | — | 2026-10-05 | Screen inventory not started. |
+| `splash` | `lib/ui/controllers/splash/` | 1 | 3 | deep-analyzed | `6328b7254` | 2026-10-05 | SCR-0002. Gateway token, pre-login config, BO cards. |
 | `stock_market` | `lib/ui/controllers/stock_market/` | 0 | 14 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `tanzania_gift` | `lib/ui/controllers/tanzania_gift/` | 0 | 3 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `tanzania_loan` | `lib/ui/controllers/tanzania_loan/` | 0 | 15 | not-started | — | 2026-10-05 | Screen inventory not started. |
@@ -122,5 +122,7 @@ FE `main` @ `6328b7254`. API inventory is done. No feature is `deep-analyzed`.
 | `utils` | — | 0 | 3 | not-started | — | 2026-10-05 | Caller files outside a feature folder, or no caller. |
 | `(no caller file)` | — | 0 | 39 | not-started | — | 2026-10-05 | Caller files outside a feature folder, or no caller. |
 
-API totals: 367 live · path-only 284 · fe-only 83 · gaps 104.
+API totals: 367 live · path-only 275 · contract-mismatch 7 · matched 2 · fe-only 83 · gaps 118.
+
+Deep-analyzed or partial this pass: splash, login, otp, onboarding, registration_onboarding, pinchanger, pincode, homepage (session hook), sendmoney (P2P), cash_point. Remaining feature rows are `not-started`.
 
