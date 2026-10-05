@@ -107,12 +107,10 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | Decrypt `payload` with AES when config `is_encrypted`/`isEncrypted` is true; else JSON-deserialize | Filter stores raw string; later cast may fail → 500 | — | `TZ-Tigo-SuperApp-ExternalPayment/TZTigoSuperAppExternalPayment/Controllers/ExternalPaymentController.cs › ExternalPaymentController.GovernmentPaymentInquiry` |
-| 2 | Validate `X-User-Session` JWT (`TokenKey`) then Redis/DB token | HTTP 410 envelope | BE-BR-EXTPAY-001 | `TZ-Tigo-SuperApp-ExternalPayment › SessionValidationFilter` |
-| 3 | `response.IsSuccessStatusCode == true` | branch / error envelope | — | `TZ-Tigo-SuperApp-ExternalPayment/TZTigoSuperAppExternalPayment/Controllers/ExternalPaymentController.cs › ExternalPaymentController.GovernmentPaymentInquiry` |
-| 4 | `billStsCode.Count > 0 && billStsCode[0]?.InnerText == "7101"` | branch / error envelope | — | `TZ-Tigo-SuperApp-ExternalPayment/TZTigoSuperAppExternalPayment/Controllers/ExternalPaymentController.cs › ExternalPaymentController.GovernmentPaymentInquiry` |
-| 5 | `_configuration.GetValue<string>("EnableLog:Error"` | branch / error envelope | — | `TZ-Tigo-SuperApp-ExternalPayment/TZTigoSuperAppExternalPayment/Controllers/ExternalPaymentController.cs › ExternalPaymentController.GovernmentPaymentInquiry` |
-| 6 | `param is string` | branch / error envelope | — | `TZ-Tigo-SuperApp-ExternalPayment/TZTigoSuperAppExternalPayment/Controllers/ExternalPaymentController.cs › ExternalPaymentController.GovernmentPaymentInquiry` |
+| 1 | Decrypt + session | 500 / 410 | BE-BR-EXTPAY-001 | `ExternalPaymentController.GovernmentPaymentInquiry` |
+| 2 | Set PspCode←`Tanzania:PspCode`, SysId←`Tanzania:SysId` | — | — | `SubmitBillPaymentRepository.GovernmentPaymentInquiry` |
+| 3 | POST gepgBillChkReq → `GovernmentInquirytoGEPG` (callback base `Tanzania:CallBackGovernmentPaymentURL`) | HTTP fail → status+ReasonPhrase | — | same |
+| 4 | HTTP OK + BillStsCode==`7101` → success; enrich ShortCode via GetShortCodeByWalletNumber | fail BillStsCode/Desc | — | same |
 
 ## Internal call chain
 1. Client POST `/api/ExternalPayment/GovernmentPaymentInquiry` with `{ payload }` envelope.
@@ -138,9 +136,9 @@ sequenceDiagram
 ```
 
 ## Downstream
-| Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
+| Order | Target | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| 1 | BE-API-CONFIG (ResponseCodeApp get-response-code-details) | Sync | after handler | responseCode, language, channel, optional service/method |
+| 1 | HTTP/XML `GovernmentInquirytoGEPG` | Sync | always | AsseType, AsseTypeValue, PspCode, SysId, ResultUrl |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
@@ -183,9 +181,7 @@ Sample (synthetic):
 - Session validity: `BE-BR-EXTPAY-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `GovernmentInquirytoGEPG`, `Tanzania:PspCode`, `Tanzania:SysId`, `Tanzania:CallBackGovernmentPaymentURL`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-ExternalPayment/TZTigoSuperAppExternalPayment/Controllers/ExternalPaymentController.cs › ExternalPaymentController.GovernmentPaymentInquiry` @ `51718e1`
