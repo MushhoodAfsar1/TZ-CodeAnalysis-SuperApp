@@ -10,6 +10,13 @@ confidence: confirmed
 ---
 # Changelog
 
+## 2026-10-05 — Dashboard balance, airtime top-up, and bill pay
+
+- Contract-diffed API-0018, API-0034, API-0035, API-0037, API-0049, API-0257, API-0258, and API-0259 against backend `0c13cc4`. All eight are `contract-mismatch`.
+- Wrote SCR-0013–0018 and FLW-0006–FLW-0007. Added BR-0013–BR-0019 and GAP-0119–GAP-0126.
+- Match totals: path-only 267, contract-mismatch 15, matched 2, fe-only 83.
+- Corrected API-0035 request keys (`asseType` / `resultUrl`; `SP99860` is a `spCode` value) and API-0259 (short code and operator name only on the others branch).
+
 ## 2026-10-05 — Session, auth, and money deep pass
 
 - Pinned the backend KB to `main` @ `0c13cc4` (contract deepen). FE stays `6328b7254`.

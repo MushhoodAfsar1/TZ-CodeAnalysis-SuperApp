@@ -31,3 +31,5 @@ Verified at `main` @ `6328b7254`.
 | Other HTTP | `lib/utils/app_util/app_util.dart` references `Dio` directly (2 hits). Not catalogued as `API-` until traced |
 
 Timeouts default from pre-login config (`apitimeout`, else 60 seconds) in `RequestTimeoutConstants`. Individual calls can override `connectTimeout` / `receiveTimeOut` / `sendTimeout`. `onForeground: true` shows the global loader; `false` runs in the background. The flag is usually passed through from the controller, so foreground vs background is a call-site decision.
+
+`getCommonJSONRequestBody` always writes `pushId`. The `isPushIdRequired` argument does not change the map. When `isGeoCodeRequired` is true and device coordinates are empty, `geoCode` is a fixed fallback pair (the pair is not stored in this KB).

@@ -11,7 +11,7 @@ confidence: partial
 
 # Coverage
 
-FE `main` @ `6328b7254`. Backend KB `main` @ `0c13cc4`. API inventory is done. Session/auth and the primary send-money and agent cash-out paths are `deep-analyzed`. Other feature rows stay `not-started`.
+FE `main` @ `6328b7254`. Backend KB `main` @ `0c13cc4`. API inventory is done. Session/auth, local send money, agent cash-out, dashboard balance, other-operator airtime top-up, and the primary bill-pay path are traced. Remaining feature rows stay `not-started` or `partial`.
 
 | Feature slug | FE paths (main) | Screens | APIs touched | Status | analyzed_sha | Updated | Notes |
 |---|---|---:|---:|---|---|---|---|
@@ -19,11 +19,11 @@ FE `main` @ `6328b7254`. Backend KB `main` @ `0c13cc4`. API inventory is done. S
 | `add_notification` | `lib/ui/controllers/add_notification/` | 0 | 3 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `advance_salary` | `lib/ui/controllers/advance_salary/` | 0 | 5 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `aft` | `lib/ui/controllers/aft/` | 0 | 3 | not-started | — | 2026-10-05 | Screen inventory not started. |
-| `airtimetopups` | `lib/ui/controllers/airtimetopups/` | 0 | 5 | not-started | — | 2026-10-05 | Screen inventory not started. |
+| `airtimetopups` | `lib/ui/controllers/airtimetopups/` | 2 | 5 | partial | `6328b7254` | 2026-10-05 | SCR-0014–0015, FLW-0006. Other-operator top-up contract-diffed. Bundles and product provision not re-diffed. |
 | `appmedia` | `lib/ui/controllers/appmedia/` | 0 | 1 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `atm_cashout` | `lib/ui/controllers/atm_cashout/` | 0 | 2 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `bankaccounts` | `lib/ui/controllers/bankaccounts/` | 0 | 7 | not-started | — | 2026-10-05 | Screen inventory not started. |
-| `billpayment` | `lib/ui/controllers/billpayment/` | 0 | 6 | not-started | — | 2026-10-05 | Screen inventory not started. |
+| `billpayment` | `lib/ui/controllers/billpayment/` | 3 | 6 | partial | `6328b7254` | 2026-10-05 | SCR-0016–0018, FLW-0007. Validate, gov inquiry, and submit contract-diffed. Favorites and bank-transfer callers not re-walked. |
 | `block_my_number` | `lib/ui/controllers/block_my_number/` | 0 | 2 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `bus_ticketing` | `lib/ui/controllers/bus_ticketing/` | 0 | 6 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `card_theme` | `lib/ui/controllers/card_theme/` | 0 | 0 | not-started | — | 2026-10-05 | Screen inventory not started. |
@@ -36,7 +36,7 @@ FE `main` @ `6328b7254`. Backend KB `main` @ `0c13cc4`. API inventory is done. S
 | `controller_commons` | `lib/ui/controllers/controller_commons/` | 0 | 15 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `corporate_expenses_management` | `lib/ui/controllers/corporate_expenses_management/` | 0 | 7 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `customer_support` | `lib/ui/controllers/customer_support/` | 0 | 0 | not-started | — | 2026-10-05 | Screen inventory not started. |
-| `dashboard` | `lib/ui/controllers/dashboard/` | 0 | 18 | not-started | — | 2026-10-05 | Screen inventory not started. |
+| `dashboard` | `lib/ui/controllers/dashboard/` | 1 | 18 | partial | `6328b7254` | 2026-10-05 | SCR-0013 balance only. API-0018 contract-mismatch. Menus, banners, and GSM resources not traced. |
 | `dashboard_bg_themes` | `lib/ui/controllers/dashboard_bg_themes/` | 0 | 1 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `dashboard_theme` | `lib/ui/controllers/dashboard_theme/` | 0 | 0 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `dashboard_v2` | `lib/ui/controllers/dashboard_v2/` | 0 | 8 | not-started | — | 2026-10-05 | Screen inventory not started. |
@@ -122,7 +122,7 @@ FE `main` @ `6328b7254`. Backend KB `main` @ `0c13cc4`. API inventory is done. S
 | `utils` | — | 0 | 3 | not-started | — | 2026-10-05 | Caller files outside a feature folder, or no caller. |
 | `(no caller file)` | — | 0 | 39 | not-started | — | 2026-10-05 | Caller files outside a feature folder, or no caller. |
 
-API totals: 367 live · path-only 275 · contract-mismatch 7 · matched 2 · fe-only 83 · gaps 118.
+API totals: 367 live · path-only 267 · contract-mismatch 15 · matched 2 · fe-only 83 · gaps 126.
 
-Deep-analyzed or partial this pass: splash, login, otp, onboarding, registration_onboarding, pinchanger, pincode, homepage (session hook), sendmoney (P2P), cash_point. Remaining feature rows are `not-started`.
+Deep-analyzed or partial: splash, login, otp, onboarding, registration_onboarding, pinchanger, pincode, homepage (session hook), sendmoney (P2P), cash_point, dashboard (balance), airtimetopups (other-operator top-up), billpayment (validate, gov inquiry, submit). Remaining feature rows are `not-started`.
 

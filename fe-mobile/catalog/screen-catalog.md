@@ -11,7 +11,7 @@ confidence: partial
 ---
 # Screen catalog
 
-IDs assigned for the session/auth path and the primary money paths. Other features are still unnumbered.
+IDs assigned for session/auth, local send money, cash-out, dashboard balance, airtime top-up, and bill pay. Other features are still unnumbered.
 
 | ID | Screen | Feature | Flow | APIs |
 |---|---|---|---|---|
@@ -27,5 +27,11 @@ IDs assigned for the session/auth path and the primary money paths. Other featur
 | SCR-0010 | Send money confirm | sendmoney | FLW-0004 | API-0014 |
 | SCR-0011 | Cash-point amount | cash_point | FLW-0005 | API-0039, API-0040 |
 | SCR-0012 | Cash-point confirm | cash_point | FLW-0005 | API-0041, API-0042 |
+| SCR-0013 | Dashboard wallet balance | dashboard | — | API-0018 |
+| SCR-0014 | Airtime top-up amount | airtimetopups | FLW-0006 | API-0257 |
+| SCR-0015 | Airtime top-up confirm | airtimetopups | FLW-0006 | API-0258, API-0259 |
+| SCR-0016 | Pay-bill amount | billpayment | FLW-0007 | API-0034 |
+| SCR-0017 | Pay-bill confirm | billpayment | FLW-0007 | API-0037 |
+| SCR-0018 | Government control number | billpayment | FLW-0007 | API-0035 |
 
-Next free screen ID: `SCR-0013`.
+Next free screen ID: `SCR-0019`.
