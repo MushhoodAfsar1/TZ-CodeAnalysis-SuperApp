@@ -33,5 +33,7 @@ Rules the app enforces on the traced flows. SESS rules BR-0001–BR-0007 are the
 | BR-0016 | `isOther` false posts AirTimeTopUpV1. `isOther` true posts AirTimeTopUpOthers and adds `shortCode` and `operatorName` | money | yes | two AIRTIME actions | `creditAirTimeTopUpOthers` | SCR-0018 | confirmed |
 | BR-0017 | Other-bill amount must be at least 100 and not above the cached wallet `mainBalance` | money | yes | no | `EnterAmountForPayBillController` | SCR-0019 | confirmed |
 | BR-0018 | Government `asseType` is `ASSESS-A`, `ASSESS-C`, or `ASSESS-E` from the flow id and the control-number chip. Next requires a reference of length at least 7 | money | yes | DTO names the field `AsseType` | `requestGovPaymentInquiry` | SCR-0021 | confirmed |
+| BR-0019 | When pre-login `isvalentine` is true, category name `Valentine Day` sorts first, and a theme message `Event` supplies the gradient | gift | yes | no | `populateValentineDataAtTop`, `getThemes` | SCR-0024 | confirmed |
+| BR-0020 | Gift pay posts TransferSendMoney with `userCaseName` `giftMoney` and `customData` theme keys. It is not a separate path | gift | yes | BE-BR-SEND-006 when leg type is giftMoney | `requestSendMoneyProcessPaymentGift` | SCR-0025, SCR-0010 | confirmed |
 
-Next free rule ID: `BR-0019`.
+Next free rule ID: `BR-0021`.

@@ -10,6 +10,12 @@ confidence: confirmed
 ---
 # Changelog
 
+## 2026-10-05 — Gift history, themes, and gift pay
+
+- Traced gift history and themes (SCR-0023–0025, FLW-0009). Payment is API-0099 on the existing send-money confirm.
+- Contract-diffed API-0096–API-0099. Added GAP-0128–GAP-0130.
+- Match totals: path-only 263, contract-mismatch 19, matched 2, fe-only 83.
+
 ## 2026-10-05 — ATM cash-out, airtime, and bills
 
 - Traced ATM cash-out (SCR-0013–0014, FLW-0006), airtime bundles and credit (SCR-0015–0018, FLW-0007), and other-bill plus government pay (SCR-0019–0022, FLW-0008).

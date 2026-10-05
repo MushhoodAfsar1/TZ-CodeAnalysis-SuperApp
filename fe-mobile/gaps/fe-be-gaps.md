@@ -11,7 +11,7 @@ confidence: partial
 
 # FE ↔ BE gaps
 
-Raised from the API inventory at FE `main` @ `6328b7254`, plus contract diffs against backend `main` @ `0c13cc4` for session, auth, send-money, cash-out (GAP-0105–GAP-0118), and ATM, airtime, and bills (GAP-0119–GAP-0127). Each `fe-only` endpoint has its own row. Backend paths with no FE caller are grouped by service so back-office CONFIG rows are not listed one by one. `path-only` rows are still not gaps.
+Raised from the API inventory at FE `main` @ `6328b7254`, plus contract diffs against backend `main` @ `0c13cc4` for session, auth, send-money, cash-out (GAP-0105–GAP-0118), ATM, airtime, and bills (GAP-0119–GAP-0127), and gift (GAP-0128–GAP-0130). Each `fe-only` endpoint has its own row. Backend paths with no FE caller are grouped by service so back-office CONFIG rows are not listed one by one. `path-only` rows are still not gaps.
 
 | ID | Type | Description | FE evidence | BE evidence | Impact | Severity | Suggested owner | Status |
 |---|---|---|---|---|---|---|---|---|
@@ -142,4 +142,7 @@ Raised from the API inventory at FE `main` @ `6328b7254`, plus contract diffs ag
 | GAP-0125 | contract | Submit bill sends `overdraftBrandID` and `useCaseName`. The DTO lists `overDraftBrandId` and `userCaseName`. `descriptionText` is not on the DTO. | API-0037 | BE-API-EXTPAY-002 | Overdraft brand and use-case can miss the binder. | M | BE/FE | open |
 | GAP-0126 | contract | Biller inquiry sends `isBankTransfer` and `descriptionText`. The DTO lists `IsBankTransfer` and does not list `descriptionText`. | API-0034 · SCR-0019 | BE-API-EXTPAY-001 | The bank-transfer flag can fail a case-sensitive bind. | M | BE/FE | open |
 | GAP-0127 | contract | Bundle purchase reads `responseData.transactionId`. GSM-013 leaves `responseData` empty. The `amount` argument is not copied into the JSON. `Price` is `MFS_PRICE` or `OCS_PRICE`. | API-0044 · SCR-0016 | BE-API-GSM-013 | The receipt id is not in the published response. The typed amount is not on the wire. | M | BE/FE | open |
+| GAP-0128 | contract | Gift history sends `iPInfo` and `accesstoken`. SEND-012 lists `ipInfo` and `accessToken`. The UI reads `receiverResult` and `senderResult`, which the response sample omits. | API-0096 · SCR-0023 | BE-API-SEND-012 | The history lists depend on unpublished fields, and the token key may not bind. | H | BE/FE | open |
+| GAP-0129 | contract | Theme category and theme-by-id send `msisdn`. `BaseModelRequest` and `GiftThemesAppDto` do not list it. | API-0097, API-0098 | BE-API-CONFIG-377, BE-API-CONFIG-378 | The number is extra on a DTO that otherwise matches `iPInfo` and `accesstoken`. | L | BE/FE | open |
+| GAP-0130 | contract | Gift pay sends `userCaseName` `giftMoney` and `customData`. BE-BR-SEND-006 writes `giftmoneyrecord` when the leg `transactionType` is `giftMoney`. The preview button compares `useCaseType` and does not assign it, so the leg type can stay whatever the contact helper already had. | API-0099 · SCR-0025 | BE-API-SEND-011 | A gift confirm can transfer without the gift record. | H | FE | open |
 

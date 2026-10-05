@@ -14,9 +14,9 @@ confidence: confirmed
 | Prefix | Meaning | Rule |
 |---|---|---|
 | `API-####` | One live `callDioAPI` (a method with two endpoints gets two IDs) | Never reuse or renumber |
-| `SCR-####` | Screen, bottom sheet, or dialog that drives logic | Next free `SCR-0023` |
-| `FLW-####` | Multi-screen flow | Next free `FLW-0009` |
-| `BR-####` | Rule the app enforces or assumes | Next free `BR-0019` |
+| `SCR-####` | Screen, bottom sheet, or dialog that drives logic | Next free `SCR-0026` |
+| `FLW-####` | Multi-screen flow | Next free `FLW-0010` |
+| `BR-####` | Rule the app enforces or assumes | Next free `BR-0021` |
 | `INT-####` | SDK or platform capability | Assigned from pubspec presence |
 | `GAP-####` | FE/BE mismatch | One row per fe-only API; be-only grouped by service |
 

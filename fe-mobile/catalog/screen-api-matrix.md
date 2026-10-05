@@ -46,3 +46,7 @@ Rows below are the traced session/auth and money triggers. Other API IDs stay in
 | SCR-0020 | API-0037 | Confirm | PIN length 4 | 1 | Fg | Receipt | Error | BE-API-EXTPAY-002 contract-mismatch | partial |
 | SCR-0021 | API-0035 | Next | Reference length ≥ 7 | 1 | Fg | SCR-0022 or bill picker | Error or stay if no bills | BE-API-EXTPAY-003 contract-mismatch | confirmed |
 | SCR-0022 | API-0037 | Confirm | PIN length 4 | 1 | Fg | Receipt, or overdraft sheet | Error | BE-API-EXTPAY-002 contract-mismatch | partial |
+| SCR-0023 | API-0096 | Open | Not already loaded from bottom nav, or bottom-nav ready | 1 | Fg | Receiver and sender lists | Error dialog | BE-API-SEND-012 contract-mismatch | confirmed |
+| SCR-0024 | API-0097 | Open | Category cache miss | 1 | Fg | Category list | Error | BE-API-CONFIG-377 contract-mismatch | confirmed |
+| SCR-0024 | API-0098 | After categories | Theme cache miss for the first category | 2 | Fg | Theme images | Error | BE-API-CONFIG-378 contract-mismatch | confirmed |
+| SCR-0010 | API-0099 | Gift confirm | PIN length 4 and gift fields stored | 1 | Fg | Receipt | Clear PIN | BE-API-SEND-011 contract-mismatch | partial |

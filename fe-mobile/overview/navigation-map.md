@@ -39,4 +39,6 @@ Airtime bundles → `AirTimeTopUpsWidget` → `AirTimeTopUpsConfirmationWidget` 
 
 Other bills → `EnterAmountForPayBillWidget` → `OtherBillsPayConfirmationWidget` → receipt. Government → `EnterControlNumberWidget` → `GovBillsEnterAmountWidget` → `BillPayRegistrationConfirmationWidget` → receipt.
 
+Gift history → contact → `TanzaniaGiftWidget` → `TanzaniaGiftPreviewWidget` → `SendMoneyConfirmationWidget` (gift body).
+
 Screen IDs: [../catalog/screen-catalog.md](../catalog/screen-catalog.md).

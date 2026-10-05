@@ -37,5 +37,8 @@ IDs assigned for the session/auth path and the primary money paths. Other featur
 | SCR-0020 | Other-bill confirm | billpayment | FLW-0008 | API-0037 |
 | SCR-0021 | Government control number | billpayment | FLW-0008 | API-0035 |
 | SCR-0022 | Government bill pay | billpayment | FLW-0008 | API-0037 |
+| SCR-0023 | Gift history | tanzania_gift | FLW-0009 | API-0096 |
+| SCR-0024 | Gift theme | tanzania_gift | FLW-0009 | API-0097, API-0098 |
+| SCR-0025 | Gift preview | tanzania_gift | FLW-0009 | API-0099 (on SCR-0010) |
 
-Next free screen ID: `SCR-0023`.
+Next free screen ID: `SCR-0026`.
