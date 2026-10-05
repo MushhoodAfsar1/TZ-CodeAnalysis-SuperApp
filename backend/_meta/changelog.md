@@ -15,3 +15,4 @@ confidence: confirmed
 |---|---|---|
 | 2026-10-05 | bootstrap | Skeleton, conventions, registry, pipeline overview |
 | 2026-10-05 | IDENT, SESS | Inventory + per-action contracts |
+| 2026-10-05 | remaining HTTP services | Per-action files for 942/964 HTTP actions; CONFIG 13 unparsed; scheduler jobs sketched |

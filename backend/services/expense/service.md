@@ -55,4 +55,4 @@ HTTP controllers under the service project. Scheduler repos expose hosted jobs i
 `TokenKey`, `isEncrypted`/`is_encrypted`, `Encryption_Decryption_Key`, `IV`, `JwtExpiryMins`, `PostgresConnection` (name only)
 
 ## Open questions
-Status this run: **inventoried**
+Status this run: **deep-analyzed**
