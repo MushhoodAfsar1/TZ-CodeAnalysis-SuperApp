@@ -96,18 +96,10 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | Decrypt `payload` with AES when config `is_encrypted`/`isEncrypted` is true; else JSON-deserialize | Filter stores raw string; later cast may fail → 500 | — | `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/RequestToPayController.cs › RequestToPayController.CreatePaymentRequest` |
-| 2 | Validate `X-User-Session` JWT (`TokenKey`) then Redis/DB token | HTTP 410 envelope | BE-BR-MERCH-001 | `TZ-Tigo-SuperApp-Merchant › SessionValidationFilter` |
-| 3 | `string.IsNullOrWhiteSpace(request.merchantName` | branch / error envelope | — | `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/RequestToPayController.cs › RequestToPayController.CreatePaymentRequest` |
-| 4 | `decimal.TryParse(request.amount, out decimal requestAmount` | branch / error envelope | — | `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/RequestToPayController.cs › RequestToPayController.CreatePaymentRequest` |
-| 5 | `request.description != null && request.description.Length > reqToPayConfigurations.maxDescriptionLength` | branch / error envelope | — | `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/RequestToPayController.cs › RequestToPayController.CreatePaymentRequest` |
-| 6 | `!mfsUserDetails.ProfileStatus` | branch / error envelope | — | `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/RequestToPayController.cs › RequestToPayController.CreatePaymentRequest` |
-| 7 | `dailyTransactions >= reqToPayConfigurations.dailyRequestLimit` | branch / error envelope | — | `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/RequestToPayController.cs › RequestToPayController.CreatePaymentRequest` |
-| 8 | `hourlyTransactions >= reqToPayConfigurations.hourlyRequestLimit` | branch / error envelope | — | `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/RequestToPayController.cs › RequestToPayController.CreatePaymentRequest` |
-| 9 | `dailyTransactionValue + amount > reqToPayConfigurations.maxDailyTransactionValue` | branch / error envelope | — | `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/RequestToPayController.cs › RequestToPayController.CreatePaymentRequest` |
-| 10 | `hourlyTransactionValue + amount > reqToPayConfigurations.maxHourlyTransactionValue` | branch / error envelope | — | `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/RequestToPayController.cs › RequestToPayController.CreatePaymentRequest` |
-| 11 | `_configuration.GetValue<string>("EnableLog:Error"` | branch / error envelope | — | `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/RequestToPayController.cs › RequestToPayController.CreatePaymentRequest` |
-| 12 | `param is string` | branch / error envelope | — | `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/RequestToPayController.cs › RequestToPayController.CreatePaymentRequest` |
+| 1 | Decrypt + session | 500 / 410 | BE-BR-MERCH-001 | `RequestToPayController.CreatePaymentRequest` |
+| 2 | Required fields + amount>0; MerchantR2PConfigurations limits (maxAmount, desc len, daily/hourly) | 400 | — | `RequestToPayService.CreatePaymentRequest` |
+| 3 | SOAP MFSUserDetails Mixx profile | fail | — | same |
+| 4 | Persist RequestToPay; USSD + FCM; if both notify fail → FAILED | FAILED | — | same |
 
 ## Internal call chain
 1. Client POST `/api/RequestToPay/CreatePaymentRequest` with `{ payload }` envelope.
@@ -133,9 +125,11 @@ sequenceDiagram
 ```
 
 ## Downstream
-| Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
+| Order | Target | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| 1 | BE-API-CONFIG (ResponseCodeApp get-response-code-details) | Sync | after handler | responseCode, language, channel, optional service/method |
+| 1 | SOAP `MFSUserDetails` | Sync | always | `Tanzania:Login:Username\|Password\|consumerID` |
+| 2 | HTTP USSD `USSDPayment:TokenUrl` / `USSDrouterPushBillpaySupperApp` | Sync | after persist | `X-API-Key`, `X-User-Id`, Username, Password |
+| 3 | FCM | Sync | after persist | payer |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
@@ -178,9 +172,7 @@ Sample (synthetic):
 - Session validity: `BE-BR-MERCH-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `MFSUserDetails`, `Tanzania:Login:Username`, `Tanzania:Login:Password`, `Tanzania:Login:consumerID`, `USSDPayment:TokenUrl`, `USSDrouterPushBillpaySupperApp`, `X-API-Key`, `X-User-Id`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/RequestToPayController.cs › RequestToPayController.CreatePaymentRequest` @ `2367767`

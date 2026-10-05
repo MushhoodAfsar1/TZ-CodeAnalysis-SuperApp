@@ -94,11 +94,8 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | Decrypt `payload` with AES when config `is_encrypted`/`isEncrypted` is true; else JSON-deserialize | Filter stores raw string; later cast may fail → 500 | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/FiberProductController.cs › FiberProductController.GetReferenceNumberValidation` |
-| 2 | Validate `X-User-Session` JWT (`TokenKey`) then Redis/DB token | HTTP 410 envelope | BE-BR-AIRTIME-001 | `TZ-Tigo-SuperApp-AirTimeTopup › SessionValidationFilter` |
-| 3 | `result.Result == "0"` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/FiberProductController.cs › FiberProductController.GetReferenceNumberValidation` |
-| 4 | `_configuration.GetSection("EnableLog"` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/FiberProductController.cs › FiberProductController.GetReferenceNumberValidation` |
-| 5 | `param is string` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/FiberProductController.cs › FiberProductController.GetReferenceNumberValidation` |
+| 1 | Decrypt + session | 500 / 410 | BE-BR-AIRTIME-001 | `FiberProductController.GetReferenceNumberValidation` |
+| 2 | TCSRequest XML POST; success Result==`0` | 500 “Interval server error” on catch | — | `FiberProductRepository.GetReferenceNumberValidation` |
 
 ## Internal call chain
 1. Client POST `/api/FiberProduct/GetReferenceNumberValidation` with `{ payload }` envelope.
@@ -124,9 +121,9 @@ sequenceDiagram
 ```
 
 ## Downstream
-| Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
+| Order | Target | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| 1 | BE-API-CONFIG (ResponseCodeApp get-response-code-details) | Sync | after handler | responseCode, language, channel, optional service/method |
+| 1 | `FiberProduct:ReferenceValidationURL` | Sync | always | FunctionName, Msisdn, ReferenceCode; `TerminalType`, `UserName`, `Password` |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
@@ -169,9 +166,7 @@ Sample (synthetic):
 - Session validity: `BE-BR-AIRTIME-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `FiberProduct:ReferenceValidationURL`, `FiberProduct:TerminalType`, `FiberProduct:UserName`, `FiberProduct:Password`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/FiberProductController.cs › FiberProductController.GetReferenceNumberValidation` @ `7a52359`

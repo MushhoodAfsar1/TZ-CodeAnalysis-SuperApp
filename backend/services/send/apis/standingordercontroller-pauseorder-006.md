@@ -90,19 +90,11 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | Decrypt `payload` with AES when config `is_encrypted`/`isEncrypted` is true; else JSON-deserialize | Filter stores raw string; later cast may fail → 500 | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/StandingOrderController.cs › StandingOrderController.PauseOrder` |
-| 2 | `resp != null` | branch / error envelope | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/StandingOrderController.cs › StandingOrderController.PauseOrder` |
-| 3 | `request.Order_Id == null \|\| request.Order_Id <= 0 \|\|                     string.IsNullOrWhiteSpace(request.Msisdn` | branch / error envelope | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/StandingOrderController.cs › StandingOrderController.PauseOrder` |
-| 4 | `!customerIdResponse.success \|\| customerIdResponse.responseData?.customer?.customer_id == null` | branch / error envelope | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/StandingOrderController.cs › StandingOrderController.PauseOrder` |
-| 5 | `standingOrder == null` | branch / error envelope | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/StandingOrderController.cs › StandingOrderController.PauseOrder` |
-| 6 | `!string.Equals(standingOrder.CustomerMsisdn, request.Msisdn, StringComparison.OrdinalIgnoreCase` | branch / error envelope | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/StandingOrderController.cs › StandingOrderController.PauseOrder` |
-| 7 | `string.Equals(standingOrder.Status, "paused", StringComparison.OrdinalIgnoreCase` | branch / error envelope | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/StandingOrderController.cs › StandingOrderController.PauseOrder` |
-| 8 | `standingOrder.isdeleted == true \|\| string.Equals(standingOrder.Status, "deleted", StringComparison.OrdinalIgnoreCase` | branch / error envelope | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/StandingOrderController.cs › StandingOrderController.PauseOrder` |
-| 9 | `string.Equals(standingOrder.Status, "expired", StringComparison.OrdinalIgnoreCase` | branch / error envelope | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/StandingOrderController.cs › StandingOrderController.PauseOrder` |
-| 10 | `!string.Equals(standingOrder.Status, "active", StringComparison.OrdinalIgnoreCase` | branch / error envelope | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/StandingOrderController.cs › StandingOrderController.PauseOrder` |
-| 11 | `serviceMethod == ""` | branch / error envelope | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/StandingOrderController.cs › StandingOrderController.PauseOrder` |
-| 12 | `resp?.responseData != null` | branch / error envelope | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/StandingOrderController.cs › StandingOrderController.PauseOrder` |
-| 13 | `_configuration.GetValue<string>("EnableLog:Error"` | branch / error envelope | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/StandingOrderController.cs › StandingOrderController.PauseOrder` |
+| 1 | Decrypt | 500 | — | `StandingOrderController.PauseOrder` |
+| 2 | Require Order_Id + Msisdn; GetCustomerId | fail | — | `StandingOrderRepository.PauseOrder` |
+| 3 | Load StandingOrders by OrderId (`isdeleted!=true`); ownership match MSISDN | 404/fail | — | same |
+| 4 | reject already paused / deleted / expired / not active|failed | 400 | — | same |
+| 5 | DB status then HTTP `PauseOrderApiUrl` | partner 200/400/404/401 | — | same |
 
 ## Internal call chain
 1. Client POST `/api/StandingOrder/PauseOrder` with `{ payload }` envelope.
@@ -131,9 +123,10 @@ sequenceDiagram
 ```
 
 ## Downstream
-| Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
+| Order | Target | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| 1 | BE-API-CONFIG (ResponseCodeApp get-response-code-details) | Sync | after handler | responseCode, language, channel, optional service/method |
+| 1 | HTTP `PauseOrderApiUrl` (+ token/customer keys) | Sync | after local status | Order_Id, Msisdn |
+| 2 | EF StandingOrders | W | always | pause/resume/soft-delete |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
@@ -176,9 +169,7 @@ Sample (synthetic):
 - Session validity: `BE-BR-SEND-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `PauseOrderApiUrl`, `GetTokenApiUrl`, `StandingOrderApiKey`, `GetCustomerIdApiUrl`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/StandingOrderController.cs › StandingOrderController.PauseOrder` @ `599771b`

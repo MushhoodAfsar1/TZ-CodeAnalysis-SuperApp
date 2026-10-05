@@ -452,6 +452,8 @@ ASP.NET Core controllers (`MapControllers`). No minimal APIs. See `overview/requ
 | BE-API-CONFIG-428 | `POST /api/TimeBasedIcon/update` | `TimeBasedIcon.SaveSectionItemAsync` | TimeBasedIcon.SaveSectionItemAsync | JWT + AuthorizationFilter | confirmed |
 | BE-API-CONFIG-429 | `POST /api/TimeBasedIcon/create` | `TimeBasedIcon.CreateItemAsync` | TimeBasedIcon.CreateItemAsync | JWT + AuthorizationFilter | confirmed |
 | BE-API-CONFIG-430 | `POST /api/TimeBasedIcon/delete` | `TimeBasedIcon.DeleteSectionItemAsync` | TimeBasedIcon.DeleteSectionItemAsync | JWT + AuthorizationFilter | confirmed |
+| BE-API-CONFIG-431 | `POST /api/Banner/create` | `BannerController.Create` | Create promotional banner (multipart `myModel`) | JWT + AuthorizationFilter | confirmed |
+| BE-API-CONFIG-432 | `POST /api/Banner/update` | `BannerController.Update` | Update promotional banner (multipart `myModel`) | JWT + AuthorizationFilter | confirmed |
 
 ## Dependencies
 | Calls | Sync/Async | Why |

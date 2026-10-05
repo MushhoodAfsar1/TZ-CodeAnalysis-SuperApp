@@ -86,9 +86,9 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | Decrypt `payload` with AES when config `is_encrypted`/`isEncrypted` is true; else JSON-deserialize | Filter stores raw string; later cast may fail → 500 | — | `TZ-Tigo-SuperApp-Wallet/TZTigoSuperAppWallet/Controllers/WalletBalanceController.cs › WalletBalanceController.GetBalance` |
-| 2 | Validate `X-User-Session` JWT (`TokenKey`) then Redis/DB token | HTTP 410 envelope | BE-BR-WALLET-001 | `TZ-Tigo-SuperApp-Wallet › SessionValidationFilter` |
-| 3 | `response != null && response.resultCode == "0"` | branch / error envelope | — | `TZ-Tigo-SuperApp-Wallet/TZTigoSuperAppWallet/Controllers/WalletBalanceController.cs › WalletBalanceController.GetBalance` |
+| 1 | Decrypt + session | 500 / 410 | BE-BR-WALLET-001 | `WalletBalanceController.GetBalance` |
+| 2 | XML POST MTPGGetBalance (`MTPGGetBalance`) | repo rethrow → 500 | — | `TZ-Tigo-SuperApp-Wallet/TZTigoSuperAppWallet/Repository/WalletBalanceRepository.cs › WalletBalanceRepository.GetBalance` |
+| 3 | `resultCode == "0"` → map tigoPesa/savingPesa/wallet3/wallet4 | fail envelope | BE-BR-WALLET-005 | controller |
 
 ## Internal call chain
 1. Client POST `/api/WalletBalance/GetBalance` with `{ payload }` envelope.
@@ -114,7 +114,8 @@ sequenceDiagram
 ## Downstream
 | Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| 1 | BE-API-CONFIG (ResponseCodeApp get-response-code-details) | Sync | after handler | responseCode, language, channel, optional service/method |
+| 1 | MMP XML GetBalance via `MTPGGetBalance` | Sync | always | accountMSISDN; `Tanzania:ConsumerID`, `Tanzania:ChannelUser`, `Tanzania:ChannerPass` (typo in code), `Tanzania:TerminalType` |
+| 2 | BE-API-CONFIG ResponseCodeApp | Sync | after handler | mapped codes |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
@@ -157,9 +158,8 @@ Sample (synthetic):
 - Session validity: `BE-BR-WALLET-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `isEncrypted`, `TokenKey`, `MTPGGetBalance`
+- `Tanzania:ConsumerID`, `Tanzania:ChannelUser`, `Tanzania:ChannerPass`, `Tanzania:TerminalType`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-Wallet/TZTigoSuperAppWallet/Controllers/WalletBalanceController.cs › WalletBalanceController.GetBalance` @ `27737b1`

@@ -111,17 +111,12 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | Decrypt `payload` with AES when config `is_encrypted`/`isEncrypted` is true; else JSON-deserialize | Filter stores raw string; later cast may fail → 500 | — | `TZ-Tigo-SuperApp-ExternalPayment/TZTigoSuperAppExternalPayment/Controllers/ExternalPaymentController.cs › ExternalPaymentController.SubmitBillPayment` |
-| 2 | Validate `X-User-Session` JWT (`TokenKey`) then Redis/DB token | HTTP 410 envelope | BE-BR-EXTPAY-001 | `TZ-Tigo-SuperApp-ExternalPayment › SessionValidationFilter` |
-| 3 | `usecase != null` | branch / error envelope | — | `TZ-Tigo-SuperApp-ExternalPayment/TZTigoSuperAppExternalPayment/Controllers/ExternalPaymentController.cs › ExternalPaymentController.SubmitBillPayment` |
-| 4 | `usecase == "buydstv"` | branch / error envelope | — | `TZ-Tigo-SuperApp-ExternalPayment/TZTigoSuperAppExternalPayment/Controllers/ExternalPaymentController.cs › ExternalPaymentController.SubmitBillPayment` |
-| 5 | `string.IsNullOrEmpty(transactionDetail.overDraftBrandId` | branch / error envelope | — | `TZ-Tigo-SuperApp-ExternalPayment/TZTigoSuperAppExternalPayment/Controllers/ExternalPaymentController.cs › ExternalPaymentController.SubmitBillPayment` |
-| 6 | `transactionDetail.isBankTransfer == true` | branch / error envelope | — | `TZ-Tigo-SuperApp-ExternalPayment/TZTigoSuperAppExternalPayment/Controllers/ExternalPaymentController.cs › ExternalPaymentController.SubmitBillPayment` |
-| 7 | `response != null && response.resultCode == "0"` | branch / error envelope | — | `TZ-Tigo-SuperApp-ExternalPayment/TZTigoSuperAppExternalPayment/Controllers/ExternalPaymentController.cs › ExternalPaymentController.SubmitBillPayment` |
-| 8 | `response.resultCode == "200102"` | branch / error envelope | — | `TZ-Tigo-SuperApp-ExternalPayment/TZTigoSuperAppExternalPayment/Controllers/ExternalPaymentController.cs › ExternalPaymentController.SubmitBillPayment` |
-| 9 | `response.resultCode == "99999" \|\| response.resultCode == "200109"` | branch / error envelope | — | `TZ-Tigo-SuperApp-ExternalPayment/TZTigoSuperAppExternalPayment/Controllers/ExternalPaymentController.cs › ExternalPaymentController.SubmitBillPayment` |
-| 10 | `_configuration.GetValue<string>("EnableLog:Error"` | branch / error envelope | — | `TZ-Tigo-SuperApp-ExternalPayment/TZTigoSuperAppExternalPayment/Controllers/ExternalPaymentController.cs › ExternalPaymentController.SubmitBillPayment` |
-| 11 | `param is string` | branch / error envelope | — | `TZ-Tigo-SuperApp-ExternalPayment/TZTigoSuperAppExternalPayment/Controllers/ExternalPaymentController.cs › ExternalPaymentController.SubmitBillPayment` |
+| 1 | Decrypt + session | 500 / 410 | BE-BR-EXTPAY-001 | `ExternalPaymentController.SubmitBillPayment` |
+| 2 | If userCaseName==buydstv, append `:productUserKey:invoicePeriod` to targetRefNumber | — | — | `SubmitBillPaymentRepository.SubmitBillPayment` |
+| 3 | Insert `BillPayment` (consumerID encrypted) | — | — | same |
+| 4 | MTPGPaymentRequest; overDraftBrandId → OverdraftBrandID; URL bank → `BankTransferPayment` else `SuperAppMTPGPayment` | — | — | same |
+| 5 | On send exception fallback COMMAND MTPGGetSODetails `TransactionStatus` (`Tanzania:MSIDN`, `Tanzania:PIN`) | — | — | same |
+| 6 | resultCode `0` / `99999` / `200109` → FCM + success; `200102` success + overdraft fields | else fail | BE-BR-EXTPAY-002 | same |
 
 ## Internal call chain
 1. Client POST `/api/ExternalPayment/SubmitBillPayment` with `{ payload }` envelope.
@@ -147,14 +142,16 @@ sequenceDiagram
 ```
 
 ## Downstream
-| Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
+| Order | Target | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| 1 | BE-API-CONFIG (ResponseCodeApp get-response-code-details) | Sync | after handler | responseCode, language, channel, optional service/method |
+| 1 | SOAP `SuperAppMTPGPayment` or `BankTransferPayment` | Sync | isBankTransfer | sourceMSISDN, targetRefNumber, amount, shortCode, overDraftBrandId |
+| 2 | SOAP `TransactionStatus` | Sync | send exception | Tanzania:MSIDN, Tanzania:PIN |
+| 3 | FCM billPayment | Sync | success codes | notify |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
 |---|---|---|
-| see service `data-model.md` | mixed | not fully attributed per action |
+| `BillPayment` | W | insert + SOAP update |
 
 ## Response (decrypted)
 | Field (JSON) | Type | Always / when | Meaning |
@@ -192,9 +189,7 @@ Sample (synthetic):
 - Session validity: `BE-BR-EXTPAY-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `SuperAppMTPGPayment`, `BankTransferPayment`, `TransactionStatus`, `Tanzania:ConsumerID`, `Tanzania:TerminalType`, `Tanzania:MSIDN`, `Tanzania:PIN`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-ExternalPayment/TZTigoSuperAppExternalPayment/Controllers/ExternalPaymentController.cs › ExternalPaymentController.SubmitBillPayment` @ `51718e1`

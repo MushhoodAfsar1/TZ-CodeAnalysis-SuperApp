@@ -80,9 +80,8 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | `request.AccountId == 0` | branch / error envelope | — | `TZ-Tigo-SuperApp-MChango/TZTigoMChangoService/Controllers/MobileControllers/AccountController.cs › AccountController.CloseMchangoAccount` |
-| 2 | `activeAccount == null` | branch / error envelope | — | `TZ-Tigo-SuperApp-MChango/TZTigoMChangoService/Controllers/MobileControllers/AccountController.cs › AccountController.CloseMchangoAccount` |
-| 3 | `accountBalance > 0` | branch / error envelope | — | `TZ-Tigo-SuperApp-MChango/TZTigoMChangoService/Controllers/MobileControllers/AccountController.cs › AccountController.CloseMchangoAccount` |
+| 1 | Decrypt + session | 500 / 410 | BE-BR-MCHANGO-001 | `AccountController.CloseMchangoAccount` |
+| 2 | AccountId != 0; account exists; GetBalance via `GetBalance` must be **0**; then soft-delete | fail | — | `AccountService.CloseMchangoAccount` |
 
 ## Internal call chain
 1. Client POST `/api/mobile/Account/CloseMchangoAccount`.
@@ -99,9 +98,10 @@ sequenceDiagram
 ```
 
 ## Downstream
-| Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
+| Order | Target | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| — | none parsed beyond in-process services | — | — | — |
+| 1 | SOAP `GetBalance` | Sync | always | ConsumerID, Tanzania:ChannelUser, Tanzania:ChannelPassword |
+| 2 | Account table | W | balance 0 | Deleted |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
@@ -144,9 +144,7 @@ Sample (synthetic):
 - Session validity: `BE-BR-MCHANGO-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `GetBalance`, `Tanzania:ChannelUser`, `Tanzania:ChannelPassword`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-MChango/TZTigoMChangoService/Controllers/MobileControllers/AccountController.cs › AccountController.CloseMchangoAccount` @ `7c288ab`

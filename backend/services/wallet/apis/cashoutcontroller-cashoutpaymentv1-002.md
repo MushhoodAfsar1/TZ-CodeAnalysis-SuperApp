@@ -61,7 +61,9 @@ Wire envelope (encrypted or plaintext JSON string in `payload`). Table below is 
 | `correlationID` | `string` | N | — | shape only | correlationID |
 | `msisdn` | `string` | N | — | shape only | msisdn |
 | `mPin` | `string` | N | — | shape only | mPin |
-| `creditParty` | `creditParty` | N | — | shape only | creditParty |
+| `creditParty` | object `{ key, value }` | N | nested object | SOAP agent username = `value` | destination |
+| `creditParty.key` | `string?` | N | — | shape | party key |
+| `creditParty.value` | `string?` | Y | — | CashOutService | agent username |
 | `amount` | `string` | N | — | shape only | amount |
 | `overDraftBrandId` | `string?` | N | — | shape only | overDraftBrandId |
 
@@ -91,7 +93,7 @@ Sample (synthetic):
   "correlationID": "<string>",
   "msisdn": "255XXXXXXXXX",
   "mPin": "<encrypted-pin>",
-  "creditParty": "<string>",
+  "creditParty": { "key": "<key>", "value": "<agent-id>" },
   "amount": "<amount>",
   "overDraftBrandId": "<string>"
 }
@@ -100,11 +102,12 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | Decrypt `payload` with AES when config `is_encrypted`/`isEncrypted` is true; else JSON-deserialize | Filter stores raw string; later cast may fail → 500 | — | `TZ-Tigo-SuperApp-Wallet/TZTigoSuperAppWallet/Controllers/CashOutController.cs › CashOutController.CashOutPaymentV1` |
-| 2 | Validate `X-User-Session` JWT (`TokenKey`) then Redis/DB token | HTTP 410 envelope | BE-BR-WALLET-001 | `TZ-Tigo-SuperApp-Wallet › SessionValidationFilter` |
-| 3 | `response.code != null && response.code.ToLower(` | branch / error envelope | — | `TZ-Tigo-SuperApp-Wallet/TZTigoSuperAppWallet/Controllers/CashOutController.cs › CashOutController.CashOutPaymentV1` |
-| 4 | `_configuration.GetValue<string>("SendFCMViaService"` | branch / error envelope | — | `TZ-Tigo-SuperApp-Wallet/TZTigoSuperAppWallet/Controllers/CashOutController.cs › CashOutController.CashOutPaymentV1` |
-| 5 | `response.IsSuccessStatusCode == true` | branch / error envelope | — | `TZ-Tigo-SuperApp-Wallet/TZTigoSuperAppWallet/Controllers/CashOutController.cs › CashOutController.CashOutPaymentV1` |
+| 1 | Decrypt + session (`TokenKey`) | 500 / 410 | BE-BR-WALLET-001 | `CashOutController.CashOutPaymentV1` |
+| 2 | Insert `cashoutpayment` (creditparty=`creditParty.value`, generated sappRefId) | logged; path continues | — | `TZ-Tigo-SuperApp-Wallet/TZTigoSuperAppWallet/Services/CashOutService.cs › CashOutService.CashOutPaymentV1` |
+| 3 | If `overDraftBrandId` set, add SOAP OverDraftBrandID additionalParameters | — | BE-BR-WALLET-004 | same |
+| 4 | SOAP CashoutRequest V3 (`CashOutPayment`); subscriberWallet=msisdn; agentWallet.username=`creditParty.value` | parse/update DB even on parse fail | — | `CashOutService.CreateCashouPaymentRequestV1` |
+| 5 | `code == "walletmanagement-2004-0000-s"` → FCM CashOut + success | else next | BE-BR-WALLET-003 | `CashOutController.CashOutPaymentV1` |
+| 6 | `walletmanagement-2004-6001-w` → **success=true** (no FCM remap) | else fail envelope | BE-BR-WALLET-003 | same |
 
 ## Internal call chain
 1. Client POST `/api/CashOut/cashOutPaymentV1` with `{ payload }` envelope.
@@ -132,12 +135,14 @@ sequenceDiagram
 ## Downstream
 | Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| — | none parsed beyond in-process services | — | — | — |
+| 1 | MMP SOAP CashoutRequest via `CashOutPayment` | Sync | always | msisdn, mPin, amount, creditParty.value, optional overDraftBrandId; `Tanzania:Username|Password|ConsumerID` |
+| 2 | FCM (`SendFCMViaService`, `FCMNotify`) | Sync | success code `walletmanagement-2004-0000-s` | CashOut template |
+| 3 | BE-API-CONFIG ResponseCodeApp | Sync | after handler | mapped codes |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
 |---|---|---|
-| see service `data-model.md` | mixed | not fully attributed per action |
+| `cashoutpayment` | W | insert then update with SOAP fields |
 
 ## Response (decrypted)
 | Field (JSON) | Type | Always / when | Meaning |
@@ -175,9 +180,8 @@ Sample (synthetic):
 - Session validity: `BE-BR-WALLET-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `isEncrypted`, `TokenKey`, `CashOutPayment`, `Tanzania:Username`, `Tanzania:Password`, `Tanzania:ConsumerID`
+- FCM: `SendFCMViaService`, `FCMNotify`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-Wallet/TZTigoSuperAppWallet/Controllers/CashOutController.cs › CashOutController.CashOutPaymentV1` @ `27737b1`

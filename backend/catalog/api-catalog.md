@@ -978,6 +978,8 @@ Primary lookup for FE agents.
 | BE-API-CONFIG-426 | CONFIG | POST | `/api/TimeBasedIcon/gettimebasedsubsections` | `TimeBasedIcon.GetTimeBasedSubsections` | confirmed |
 | BE-API-CONFIG-428 | CONFIG | POST | `/api/TimeBasedIcon/update` | `TimeBasedIcon.SaveSectionItemAsync` | confirmed |
 | BE-API-CONFIG-430 | CONFIG | POST | `/api/TimeBasedIcon/delete` | `TimeBasedIcon.DeleteSectionItemAsync` | confirmed |
+| BE-API-CONFIG-431 | CONFIG | POST | `/api/Banner/create` | `BannerController.Create` | confirmed |
+| BE-API-CONFIG-432 | CONFIG | POST | `/api/Banner/update` | `BannerController.Update` | confirmed |
 | BE-API-PORTAL-334 | PORTAL | POST | `{baseUrl}/Account/getusers` | `accountservice.service.call334` | confirmed |
 | BE-API-PORTAL-335 | PORTAL | POST | `{baseUrl}/Account/logout` | `accountservice.service.call335` | confirmed |
 | BE-API-PORTAL-293 | PORTAL | GET | `{baseUrl}/Acquirer/getall` | `acquirer.service.call293` | confirmed |

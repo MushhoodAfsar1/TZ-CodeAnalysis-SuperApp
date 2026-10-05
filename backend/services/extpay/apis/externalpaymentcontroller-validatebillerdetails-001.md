@@ -102,12 +102,10 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | Decrypt `payload` with AES when config `is_encrypted`/`isEncrypted` is true; else JSON-deserialize | Filter stores raw string; later cast may fail → 500 | — | `TZ-Tigo-SuperApp-ExternalPayment/TZTigoSuperAppExternalPayment/Controllers/ExternalPaymentController.cs › ExternalPaymentController.ValidateBillerDetails` |
-| 2 | Validate `X-User-Session` JWT (`TokenKey`) then Redis/DB token | HTTP 410 envelope | BE-BR-EXTPAY-001 | `TZ-Tigo-SuperApp-ExternalPayment › SessionValidationFilter` |
-| 3 | `validateBillerDetails.IsBankTransfer == true` | branch / error envelope | — | `TZ-Tigo-SuperApp-ExternalPayment/TZTigoSuperAppExternalPayment/Controllers/ExternalPaymentController.cs › ExternalPaymentController.ValidateBillerDetails` |
-| 4 | `response != null && response.resultCode == "0"` | branch / error envelope | — | `TZ-Tigo-SuperApp-ExternalPayment/TZTigoSuperAppExternalPayment/Controllers/ExternalPaymentController.cs › ExternalPaymentController.ValidateBillerDetails` |
-| 5 | `_configuration.GetValue<string>("EnableLog:Error"` | branch / error envelope | — | `TZ-Tigo-SuperApp-ExternalPayment/TZTigoSuperAppExternalPayment/Controllers/ExternalPaymentController.cs › ExternalPaymentController.ValidateBillerDetails` |
-| 6 | `param is string` | branch / error envelope | — | `TZ-Tigo-SuperApp-ExternalPayment/TZTigoSuperAppExternalPayment/Controllers/ExternalPaymentController.cs › ExternalPaymentController.ValidateBillerDetails` |
+| 1 | Decrypt + session | 500 / 410 | BE-BR-EXTPAY-001 | `ExternalPaymentController.ValidateBillerDetails` |
+| 2 | Resolve shortCode via `govpayshortcode` (config DB); fallback request shortCode | — | — | `ValidateBillerDetailsRepository.ValidateBillerDetail` |
+| 3 | MTPGBillQueryRequest; PIN default `0000`; TerminalType `Tanzania:TerminalType` | — | — | same |
+| 4 | URL `IsBankTransfer` → `BankTransferFee` else `MTPGBillQuery`; success resultCode==`0` | fail | — | same |
 
 ## Internal call chain
 1. Client POST `/api/ExternalPayment/ValidateBillerDetails` with `{ payload }` envelope.
@@ -133,9 +131,9 @@ sequenceDiagram
 ```
 
 ## Downstream
-| Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
+| Order | Target | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| 1 | BE-API-CONFIG (ResponseCodeApp get-response-code-details) | Sync | after handler | responseCode, language, channel, optional service/method |
+| 1 | SOAP `MTPGBillQuery` or `BankTransferFee` | Sync | IsBankTransfer | ConsumerID `Tanzania:ConsumerID`, TerminalType, targetRefNumber, amount, shortCode |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
@@ -178,9 +176,7 @@ Sample (synthetic):
 - Session validity: `BE-BR-EXTPAY-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `MTPGBillQuery`, `BankTransferFee`, `Tanzania:ConsumerID`, `Tanzania:TerminalType`, `TokenKey`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-ExternalPayment/TZTigoSuperAppExternalPayment/Controllers/ExternalPaymentController.cs › ExternalPaymentController.ValidateBillerDetails` @ `51718e1`

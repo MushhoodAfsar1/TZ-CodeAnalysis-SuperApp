@@ -110,12 +110,10 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | Decrypt `payload` with AES when config `is_encrypted`/`isEncrypted` is true; else JSON-deserialize | Filter stores raw string; later cast may fail → 500 | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.AirTimeTopUpOthers` |
-| 2 | Validate `X-User-Session` JWT (`TokenKey`) then Redis/DB token | HTTP 410 envelope | BE-BR-AIRTIME-001 | `TZ-Tigo-SuperApp-AirTimeTopup › SessionValidationFilter` |
-| 3 | `request.sourceMsisdn == request.targetMsisdn` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.AirTimeTopUpOthers` |
-| 4 | `response.ResultCode == "99999" && !string.IsNullOrEmpty(request.targetMsisdn` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.AirTimeTopUpOthers` |
-| 5 | `_configuration.GetSection("EnableLog"` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.AirTimeTopUpOthers` |
-| 6 | `param is string` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.AirTimeTopUpOthers` |
+| 1 | Decrypt + session | 500 / 410 | BE-BR-AIRTIME-001 | `AirTimeController.AirTimeTopUpOthers` |
+| 2 | If source==target MSISDN, GET OperatorsInformation to fill shortCode/operatorName | — | — | `AirTimeRepository.AirTimeTopUpOthers` |
+| 3 | MTPGPaymentRequest XML POST `MTPGPaymentRequest:URL`; success iff ResultCode `99999` | fail + FCM only on success | — | same |
+| 4 | finally insert `airtimetopup` | — | — | same |
 
 ## Internal call chain
 1. Client POST `/api/AirTime/AirTimeTopUpOthers` with `{ payload }` envelope.
@@ -141,9 +139,11 @@ sequenceDiagram
 ```
 
 ## Downstream
-| Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
+| Order | Target | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| 1 | BE-API-CONFIG (ResponseCodeApp get-response-code-details) | Sync | after handler | responseCode, language, channel, optional service/method |
+| 1 | HTTP `VerifySendMoney:OperatorsInformation` | Sync | source==target | msisdn |
+| 2 | SOAP MTPGPayment `MTPGPaymentRequest:URL` | Sync | always | `MTPGPaymentRequest:ConsumerID\|TerminalType\|PaymentType` |
+| 3 | FCM | Sync | ResultCode 99999 | notify |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
@@ -186,9 +186,7 @@ Sample (synthetic):
 - Session validity: `BE-BR-AIRTIME-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `MTPGPaymentRequest:URL`, `MTPGPaymentRequest:ConsumerID`, `MTPGPaymentRequest:TerminalType`, `MTPGPaymentRequest:PaymentType`, `VerifySendMoney:OperatorsInformation`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.AirTimeTopUpOthers` @ `7a52359`

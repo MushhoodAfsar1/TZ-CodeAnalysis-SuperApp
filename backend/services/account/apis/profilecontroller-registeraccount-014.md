@@ -106,18 +106,9 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | Decrypt `payload` with AES when config `is_encrypted`/`isEncrypted` is true; else JSON-deserialize | Filter stores raw string; later cast may fail → 500 | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.RegisterAccount` |
-| 2 | `string.IsNullOrWhiteSpace(request.latitude` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.RegisterAccount` |
-| 3 | `string.IsNullOrWhiteSpace(request.longitude` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.RegisterAccount` |
-| 4 | `string.IsNullOrEmpty(request.appVersion` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.RegisterAccount` |
-| 5 | `request.CustomerMsisdn.StartsWith("0"` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.RegisterAccount` |
-| 6 | `!xnetRegisterAccApiResponse.IsSuccessStatusCode` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.RegisterAccount` |
-| 7 | `xnetResponse.StatusCode?.ToString(` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.RegisterAccount` |
-| 8 | `xnetResponse.StatusCode?.ToString(` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.RegisterAccount` |
-| 9 | `isAgent` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.RegisterAccount` |
-| 10 | `profile != null` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.RegisterAccount` |
-| 11 | `!profileStatus` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.RegisterAccount` |
-| 12 | `_configuration.GetValue<string>("EnableLog:Error"` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.RegisterAccount` |
+| 1 | Decrypt | 500 | — | `ProfileController.RegisterAccount` |
+| 2 | Require appVersion, CustomerMsisdn, lat/long, NidaVerificationId; normalize MSISDN | fail | — | `ProfileService.RegisterAccount` |
+| 3 | XNET SC0000 / FL0004; agent check + MFSUserDetails; optional link | mapped codes | — | same |
 
 ## Internal call chain
 1. Client POST `/api/Profile/RegisterAccount` with `{ payload }` envelope.
@@ -145,9 +136,11 @@ sequenceDiagram
 ```
 
 ## Downstream
-| Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
+| Order | Target | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| 1 | BE-API-CONFIG (ResponseCodeApp get-response-code-details) | Sync | after handler | responseCode, language, channel, optional service/method |
+| 1 | HTTP `RegisterAccountAPI` | Sync | always | SelfOnboarding channelType/proofDocType/remoteIP/spokenLanguage/type |
+| 2 | SOAP `MFSAccountType` / `MFSUserDetails` | Sync | after XNET | msisdn |
+| 3 | optional link account | Sync | link path | — |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
@@ -190,9 +183,7 @@ Sample (synthetic):
 - Session validity: `BE-BR-ACCOUNT-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `RegisterAccountAPI`, `SelfOnboarding:RegisterAccountAPI:channelType`, `proofDocType`, `remoteIP`, `spokenLanguage`, `type`, `MFSAccountType`, `MFSUserDetails`, `GetUserDetailURL`, `Tanzania:Login:*`, `Tanzania:CheckAuth:*`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.RegisterAccount` @ `5c549d6`

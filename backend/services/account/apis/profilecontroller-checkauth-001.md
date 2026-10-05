@@ -88,17 +88,9 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | Decrypt `payload` with AES when config `is_encrypted`/`isEncrypted` is true; else JSON-deserialize | Filter stores raw string; later cast may fail → 500 | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.CheckAuth` |
-| 2 | Device not blocked | HTTP 423 | BE-BR-ACCOUNT-002 | `TZ-Tigo-SuperApp-Account › DeviceFilter` |
-| 3 | `isAgent` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.CheckAuth` |
-| 4 | `!string.IsNullOrEmpty(responseCode` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.CheckAuth` |
-| 5 | `profile == null` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.CheckAuth` |
-| 6 | `success` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.CheckAuth` |
-| 7 | `otpStatus == true` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.CheckAuth` |
-| 8 | `profiledb.profilestatus == true` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.CheckAuth` |
-| 9 | `device == null` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.CheckAuth` |
-| 10 | `otpStatus == true` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.CheckAuth` |
-| 11 | `_configuration.GetValue<string>("EnableLog:Error"` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.CheckAuth` |
+| 1 | Decrypt + DeviceFilter | 500 | — | `ProfileController.CheckAuth` |
+| 2 | CheckTigoAgent (block UM-Lo-15; special viewmfsaccounttype-3063-3072-E → UM-Lo-12) | blocked | — | `ProfileService.CheckAuth` |
+| 3 | GetUserDetail + MFSUserDetails + OTP branch → UM-Lo-01/02/03/04/12 | mapped | — | same |
 
 ## Internal call chain
 1. Client POST `/api/Profile/CheckAuth` with `{ payload }` envelope.
@@ -123,9 +115,10 @@ sequenceDiagram
 ```
 
 ## Downstream
-| Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
+| Order | Target | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| 1 | BE-API-CONFIG (ResponseCodeApp get-response-code-details) | Sync | after handler | responseCode, language, channel, optional service/method |
+| 1 | `GetUserDetailURL` + `MFSUserDetails` + `MFSAccountType` | Sync | always | msisdn; `Tanzania:CheckAuth:channelId\|username\|password` |
+| 2 | OTP SMS path | Sync | new user | SendSMS keys |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
@@ -168,9 +161,7 @@ Sample (synthetic):
 - Session validity: `BE-BR-ACCOUNT-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `GetUserDetailURL`, `MFSUserDetails`, `MFSAccountType`, `Tanzania:CheckAuth:channelId`, `Tanzania:CheckAuth:username`, `Tanzania:CheckAuth:password`, `Tanzania:Login:*`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.CheckAuth` @ `5c549d6`

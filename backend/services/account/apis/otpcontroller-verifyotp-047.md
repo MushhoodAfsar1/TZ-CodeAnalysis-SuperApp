@@ -88,11 +88,10 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | Decrypt `payload` with AES when config `is_encrypted`/`isEncrypted` is true; else JSON-deserialize | Filter stores raw string; later cast may fail → 500 | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/OtpController.cs › OtpController.VerifyOtp` |
-| 2 | `profile != null` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/OtpController.cs › OtpController.VerifyOtp` |
-| 3 | `cacheBlockingData != null` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/OtpController.cs › OtpController.VerifyOtp` |
-| 4 | `cacheBlockingData.ToString(` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/OtpController.cs › OtpController.VerifyOtp` |
-| 5 | `_configuration.GetValue<string>("EnableLog:Error"` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/OtpController.cs › OtpController.VerifyOtp` |
+| 1 | Decrypt | 500 | — | `OtpController.VerifyOtp` |
+| 2 | Profile exists; inventory default-OTP bypass | fail | — | `OtpService.VerifyOtp` |
+| 3 | Redis `{deviceId}_{msisdn}` encrypted match | fail | — | same |
+| 4 | On OK AddUpdateDevice + FCM; GET DeviceDetails for IMEI/IMSI | — | — | same |
 
 ## Internal call chain
 1. Client POST `/api/Otp/VerifyOtp` with `{ payload }` envelope.
@@ -117,9 +116,11 @@ sequenceDiagram
 ```
 
 ## Downstream
-| Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
+| Order | Target | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| 1 | BE-API-CONFIG (ResponseCodeApp get-response-code-details) | Sync | after handler | responseCode, language, channel, optional service/method |
+| 1 | Redis OTP key | Sync | always | deviceId+msisdn |
+| 2 | HTTP `DeviceDetails/{msisdn}` | Sync | success | IMEI/IMSI |
+| 3 | FCM | Sync | success | device |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
@@ -162,9 +163,7 @@ Sample (synthetic):
 - Session validity: `BE-BR-ACCOUNT-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `DeviceDetails`, `GoogleAPIKey`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/OtpController.cs › OtpController.VerifyOtp` @ `5c549d6`

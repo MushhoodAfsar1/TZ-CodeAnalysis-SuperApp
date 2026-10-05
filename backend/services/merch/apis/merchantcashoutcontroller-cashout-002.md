@@ -102,13 +102,9 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | Decrypt `payload` with AES when config `is_encrypted`/`isEncrypted` is true; else JSON-deserialize | Filter stores raw string; later cast may fail → 500 | — | `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/MerchantCashoutController.cs › MerchantCashoutController.CashOut` |
-| 2 | Validate `X-User-Session` JWT (`TokenKey`) then Redis/DB token | HTTP 410 envelope | BE-BR-MERCH-001 | `TZ-Tigo-SuperApp-Merchant › SessionValidationFilter` |
-| 3 | `req.EntityContactDetails != null && req.EntityContactDetails.Count > 0` | branch / error envelope | — | `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/MerchantCashoutController.cs › MerchantCashoutController.CashOut` |
-| 4 | `response.IsSuccessStatusCode` | branch / error envelope | — | `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/MerchantCashoutController.cs › MerchantCashoutController.CashOut` |
-| 5 | `!string.IsNullOrEmpty(requestResponse.TransactionID` | branch / error envelope | — | `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/MerchantCashoutController.cs › MerchantCashoutController.CashOut` |
-| 6 | `_configuration.GetValue<string>("EnableLog:Error"` | branch / error envelope | — | `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/MerchantCashoutController.cs › MerchantCashoutController.CashOut` |
-| 7 | `param is string` | branch / error envelope | — | `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/MerchantCashoutController.cs › MerchantCashoutController.CashOut` |
+| 1 | Decrypt + session | 500 / 410 | BE-BR-MERCH-001 | `MerchantCashOutController.CashOut` |
+| 2 | GetEntityDetails `Tanzania:SuperAppGetEntityDetails` ACTIVE contacts | fail | — | `CashoutService.MerchantCashOut` |
+| 3 | LanguageCode en→1 else 0; Channel=`Tanzania:channel`; POST `Tanzania:CashOut` + CashOutAuthToken; persist cashout; success if TransactionID present | fail partner ErrorCode | — | same |
 
 ## Internal call chain
 1. Client POST `/api/MerchantCashout/CashoutPayment` with `{ payload }` envelope.
@@ -134,14 +130,16 @@ sequenceDiagram
 ```
 
 ## Downstream
-| Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
+| Order | Target | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| 1 | BE-API-CONFIG (ResponseCodeApp get-response-code-details) | Sync | after handler | responseCode, language, channel, optional service/method |
+| 1 | HTTP `Tanzania:SuperAppGetEntityDetails` | Sync | always | entity |
+| 2 | HTTP `Tanzania:CashOut` | Sync | ACTIVE | EntityUsername, MSISDN, Amount, PINCode, EntityContactDetails[] |
+| 3 | EF cashout | W | always | persist |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
 |---|---|---|
-| see service `data-model.md` | mixed | not fully attributed per action |
+| `cashout` | W | persist |
 
 ## Response (decrypted)
 | Field (JSON) | Type | Always / when | Meaning |
@@ -179,9 +177,7 @@ Sample (synthetic):
 - Session validity: `BE-BR-MERCH-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `Tanzania:SuperAppGetEntityDetails`, `Tanzania:CashOut`, `Tanzania:CashOutAuthToken`, `Tanzania:channel`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/MerchantCashoutController.cs › MerchantCashoutController.CashOut` @ `2367767`

@@ -110,17 +110,11 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | Decrypt `payload` with AES when config `is_encrypted`/`isEncrypted` is true; else JSON-deserialize | Filter stores raw string; later cast may fail → 500 | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.AirTimeTopUp` |
-| 2 | Validate `X-User-Session` JWT (`TokenKey`) then Redis/DB token | HTTP 410 envelope | BE-BR-AIRTIME-001 | `TZ-Tigo-SuperApp-AirTimeTopup › SessionValidationFilter` |
-| 3 | `apiResponse.IsSuccessStatusCode` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.AirTimeTopUp` |
-| 4 | `code[0].InnerText == "topup-2002-6001-W"` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.AirTimeTopUp` |
-| 5 | `!string.IsNullOrEmpty(request.targetMsisdn` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.AirTimeTopUp` |
-| 6 | `status.Count > 0` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.AirTimeTopUp` |
-| 7 | `faultcode.Count > 0` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.AirTimeTopUp` |
-| 8 | `description.Count > 0` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.AirTimeTopUp` |
-| 9 | `faultstring.Count > 0` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.AirTimeTopUp` |
-| 10 | `_configuration.GetSection("EnableLog"` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.AirTimeTopUp` |
-| 11 | `param is string` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.AirTimeTopUp` |
+| 1 | Decrypt + session | 500 / 410 | BE-BR-AIRTIME-001 | `AirTimeController.AirTimeTopUp` |
+| 2 | Insert `airtimetopup` (AirTimeType Mixx By Yas); DB fail logged, continues | — | — | `AirTimeRepository.AirTimeTopUp` |
+| 3 | SOAP TopUpRequest (`AirTimeTopUp`); V0 **ignores** overDraftBrandId | parse v3/v1 tags; update DB | — | same |
+| 4 | code `topup-2002-6001-W` → remap `topup-20103-E` low-balance **fail** | fail | BE-BR-AIRTIME-002 | same |
+| 5 | Else if targetMsisdn set → FCM ReceiverTopUp + success | HTTP fail → fault tags | — | same |
 
 ## Internal call chain
 1. Client POST `/api/AirTime/AirTimeTopUp` with `{ payload }` envelope.
@@ -146,14 +140,16 @@ sequenceDiagram
 ```
 
 ## Downstream
-| Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
+| Order | Target | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| 1 | BE-API-CONFIG (ResponseCodeApp get-response-code-details) | Sync | after handler | responseCode, language, channel, optional service/method |
+| 1 | SOAP TopUp via `AirTimeTopUp` | Sync | always | source/target, pin, amount, wallets; `TanzaniaAPI:Username\|Password\|consumerId\|Debug` |
+| 2 | FCM ReceiverTopUp | Sync | success + targetMsisdn | notify |
+| 3 | EF `airtimetopup` | W | always | persist |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
 |---|---|---|
-| see service `data-model.md` | mixed | not fully attributed per action |
+| `airtimetopup` | W | insert + SOAP update |
 
 ## Response (decrypted)
 | Field (JSON) | Type | Always / when | Meaning |
@@ -191,9 +187,7 @@ Sample (synthetic):
 - Session validity: `BE-BR-AIRTIME-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `AirTimeTopUp`, `TanzaniaAPI:Username`, `TanzaniaAPI:Password`, `TanzaniaAPI:consumerId`, `TanzaniaAPI:Debug`, `TokenKey`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.AirTimeTopUp` @ `7a52359`

@@ -106,11 +106,9 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | Decrypt `payload` with AES when config `is_encrypted`/`isEncrypted` is true; else JSON-deserialize | Filter stores raw string; later cast may fail → 500 | — | `TZ-Tigo-SuperApp-Loan/TZTigoSuperAppLoan/Controllers/KitongaController.cs › KitongaController.PurchaseLoanProduct` |
-| 2 | Validate `X-User-Session` JWT (`TokenKey`) then Redis/DB token | HTTP 410 envelope | BE-BR-LOAN-001 | `TZ-Tigo-SuperApp-Loan › SessionValidationFilter` |
-| 3 | `response?.header?.code == "LoanEngine-03-0000-S"` | branch / error envelope | — | `TZ-Tigo-SuperApp-Loan/TZTigoSuperAppLoan/Controllers/KitongaController.cs › KitongaController.PurchaseLoanProduct` |
-| 4 | `_configuration.GetValue<string>("EnableLog:Error"` | branch / error envelope | — | `TZ-Tigo-SuperApp-Loan/TZTigoSuperAppLoan/Controllers/KitongaController.cs › KitongaController.PurchaseLoanProduct` |
-| 5 | `param is string` | branch / error envelope | — | `TZ-Tigo-SuperApp-Loan/TZTigoSuperAppLoan/Controllers/KitongaController.cs › KitongaController.PurchaseLoanProduct` |
+| 1 | Decrypt + session | 500 / 410 | BE-BR-LOAN-001 | `KitongaController.PurchaseLoanProduct` |
+| 2 | Bearer via TokenGeneration; nested wire `{header, body}` | — | — | `KitongaLoanRepository.PurchaseLoanProduct` |
+| 3 | Success header.code==`LoanEngine-03-0000-S`; always write transaction | fail | — | same |
 
 ## Internal call chain
 1. Client POST `/api/Kitonga/PurchaseLoanProduct` with `{ payload }` envelope.
@@ -137,14 +135,15 @@ sequenceDiagram
 ```
 
 ## Downstream
-| Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
+| Order | Target | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| 1 | BE-API-CONFIG (ResponseCodeApp get-response-code-details) | Sync | after handler | responseCode, language, channel, optional service/method |
+| 1 | HTTP token `Tanzania:SuperAppKitongaGetToken` (`GrantType`, `KitongAuthToken`) | Sync | always | client credentials |
+| 2 | HTTP `Tanzania:SuperAppPurchaseLoanProduct` | Sync | token ok | msisdn, pin, productCode, amount, termDays |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
 |---|---|---|
-| see service `data-model.md` | mixed | not fully attributed per action |
+| `transaction` | W | always |
 
 ## Response (decrypted)
 | Field (JSON) | Type | Always / when | Meaning |
@@ -182,9 +181,7 @@ Sample (synthetic):
 - Session validity: `BE-BR-LOAN-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `Tanzania:SuperAppPurchaseLoanProduct`, `Tanzania:SuperAppKitongaGetToken`, `GrantType`, `KitongAuthToken`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-Loan/TZTigoSuperAppLoan/Controllers/KitongaController.cs › KitongaController.PurchaseLoanProduct` @ `759a471`

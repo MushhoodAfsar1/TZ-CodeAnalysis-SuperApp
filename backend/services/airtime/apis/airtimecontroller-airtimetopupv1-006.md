@@ -110,17 +110,9 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | Decrypt `payload` with AES when config `is_encrypted`/`isEncrypted` is true; else JSON-deserialize | Filter stores raw string; later cast may fail → 500 | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.AirTimeTopUpV1` |
-| 2 | Validate `X-User-Session` JWT (`TokenKey`) then Redis/DB token | HTTP 410 envelope | BE-BR-AIRTIME-001 | `TZ-Tigo-SuperApp-AirTimeTopup › SessionValidationFilter` |
-| 3 | `!string.IsNullOrEmpty(request.overDraftBrandId` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.AirTimeTopUpV1` |
-| 4 | `apiResponse.IsSuccessStatusCode` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.AirTimeTopUpV1` |
-| 5 | `!string.IsNullOrEmpty(request.targetMsisdn` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.AirTimeTopUpV1` |
-| 6 | `status.Count > 0` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.AirTimeTopUpV1` |
-| 7 | `faultcode.Count > 0` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.AirTimeTopUpV1` |
-| 8 | `description.Count > 0` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.AirTimeTopUpV1` |
-| 9 | `faultstring.Count > 0` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.AirTimeTopUpV1` |
-| 10 | `_configuration.GetSection("EnableLog"` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.AirTimeTopUpV1` |
-| 11 | `param is string` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.AirTimeTopUpV1` |
+| 1 | Decrypt + session | 500 / 410 | BE-BR-AIRTIME-001 | `AirTimeController.AirTimeTopUpV1` |
+| 2 | Insert airtimetopup; SOAP TopUp; if overDraftBrandId set include OverDraftBrandID | parse **v31/v11** | BE-BR-AIRTIME-003 | `AirTimeRepository.AirTimeTopUpV1` |
+| 3 | FCM if targetMsisdn and code ≠ `topup-2002-6001-W` (no hard remap to 20103-E) | fail path same as V0 | BE-BR-AIRTIME-002 | same |
 
 ## Internal call chain
 1. Client POST `/api/AirTime/AirTimeTopUpV1` with `{ payload }` envelope.
@@ -146,14 +138,16 @@ sequenceDiagram
 ```
 
 ## Downstream
-| Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
+| Order | Target | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| 1 | BE-API-CONFIG (ResponseCodeApp get-response-code-details) | Sync | after handler | responseCode, language, channel, optional service/method |
+| 1 | SOAP via `AirTimeTopUp` | Sync | always | source/target/pin/amount + optional overDraftBrandId; `TanzaniaAPI:*` |
+| 2 | FCM | Sync | success except low-balance warning | ReceiverTopUp |
+| 3 | EF `airtimetopup` | W | always | persist |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
 |---|---|---|
-| see service `data-model.md` | mixed | not fully attributed per action |
+| `airtimetopup` | W | insert + SOAP update |
 
 ## Response (decrypted)
 | Field (JSON) | Type | Always / when | Meaning |
@@ -191,9 +185,7 @@ Sample (synthetic):
 - Session validity: `BE-BR-AIRTIME-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `AirTimeTopUp`, `TanzaniaAPI:Username`, `TanzaniaAPI:Password`, `TanzaniaAPI:consumerId`, `TokenKey`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.AirTimeTopUpV1` @ `7a52359`

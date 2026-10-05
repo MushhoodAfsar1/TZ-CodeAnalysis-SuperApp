@@ -92,12 +92,8 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | Decrypt `payload` with AES when config `is_encrypted`/`isEncrypted` is true; else JSON-deserialize | Filter stores raw string; later cast may fail → 500 | — | `TZ-Tigo-SuperApp-Saving/TZTigoSuperAppSaving/Controllers/KibubuPlusController.cs › KibubuPlusController.ManualContribution` |
-| 2 | Validate `X-User-Session` JWT (`TokenKey`) then Redis/DB token | HTTP 410 envelope | BE-BR-SAVING-001 | `TZ-Tigo-SuperApp-Saving › SessionValidationFilter` |
-| 3 | `validationResult != null` | branch / error envelope | — | `TZ-Tigo-SuperApp-Saving/TZTigoSuperAppSaving/Controllers/KibubuPlusController.cs › KibubuPlusController.ManualContribution` |
-| 4 | `response?.header != null` | branch / error envelope | — | `TZ-Tigo-SuperApp-Saving/TZTigoSuperAppSaving/Controllers/KibubuPlusController.cs › KibubuPlusController.ManualContribution` |
-| 5 | `_configuration.GetValue<string>("EnableLog:Error"` | branch / error envelope | — | `TZ-Tigo-SuperApp-Saving/TZTigoSuperAppSaving/Controllers/KibubuPlusController.cs › KibubuPlusController.ManualContribution` |
-| 6 | `param is string` | branch / error envelope | — | `TZ-Tigo-SuperApp-Saving/TZTigoSuperAppSaving/Controllers/KibubuPlusController.cs › KibubuPlusController.ManualContribution` |
+| 1 | Decrypt + session | 500 / 410 | BE-BR-SAVING-001 | `KibubuPlusController.ManualContribution` |
+| 2 | Nested header/body HTTP; success `LoanEngine-1001-204-S` | fail | — | `KibubuPlusRepository.ManualContribution` |
 
 ## Internal call chain
 1. Client POST `/api/KibubuPlus/ManualContribution` with `{ payload }` envelope.
@@ -125,9 +121,9 @@ sequenceDiagram
 ```
 
 ## Downstream
-| Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
+| Order | Target | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| 1 | BE-API-CONFIG (ResponseCodeApp get-response-code-details) | Sync | after handler | responseCode, language, channel, optional service/method |
+| 1 | HTTP `KibubuPlus:ManualContributionUrl` | Sync | always | msisdn, pin, amount / plan fields |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
@@ -170,9 +166,7 @@ Sample (synthetic):
 - Session validity: `BE-BR-SAVING-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `KibubuPlus:ManualContributionUrl`, `KibubuPlus:BasicToken`, `TokenKey`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-Saving/TZTigoSuperAppSaving/Controllers/KibubuPlusController.cs › KibubuPlusController.ManualContribution` @ `2ca8791`

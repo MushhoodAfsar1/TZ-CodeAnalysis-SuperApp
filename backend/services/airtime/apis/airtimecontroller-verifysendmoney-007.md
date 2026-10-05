@@ -56,7 +56,16 @@ Wire envelope (encrypted or plaintext JSON string in `payload`). Table below is 
 | `geoCode` | `string?` | N | — | shape only | geoCode |
 | `userCaseName` | `string?` | N | — | shape only | userCaseName |
 | `accessToken` | `string?` | N | — | shape only | accessToken |
-| `sendMoney` | `List<SendMoney>?` | N | — | shape only | sendMoney |
+| `sendMoney` | `List<SendMoney>` | Y | one+ legs | foreach | verify legs |
+| `sendMoney[].consumerID` | `string?` | overwritten | — | `VerifySendMoney:ConsumerID` | MMP consumer |
+| `sendMoney[].referenceID` | `string?` | N | — | shape | MMP ref |
+| `sendMoney[].sourceMSISDN` | `string?` | Y | MSISDN | MMP | payer |
+| `sendMoney[].targetMSISDN` | `string?` | Y | MSISDN; TANQR prefix | MMP | payee |
+| `sendMoney[].sourcePin` | `string?` | N | PIN | bill-query | PIN |
+| `sendMoney[].terminalType` | `string?` | N | — | `VerifySendMoney:TerminalType` | channel |
+| `sendMoney[].amount` | `string?` | Y | decimal | MMP | amount |
+| `sendMoney[].shortCode` | `string?` | Y | TANQR or 50001/50024/50058 | repository | rail |
+| `sendMoney[].inclCOFee` | `bool?` | N | true → ShortCode 50001 | repository | include CO fee |
 
 Headers / route / query params: none parsed beyond action signature `[('msg', 'RequestModel')]`
 
@@ -79,27 +88,20 @@ Sample (synthetic):
   "geoCode": "<string>",
   "userCaseName": "<string>",
   "accessToken": "<jwt>",
-  "sendMoney": []
+  "sendMoney": [{ "sourceMSISDN": "255XXXXXXXXX", "targetMSISDN": "255XXXXXXXXX", "amount": "<amount>", "shortCode": "<shortcode>", "inclCOFee": false }]
 }
 ```
 
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | Decrypt `payload` with AES when config `is_encrypted`/`isEncrypted` is true; else JSON-deserialize | Filter stores raw string; later cast may fail → 500 | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.VerifySendMoney` |
-| 2 | Validate `X-User-Session` JWT (`TokenKey`) then Redis/DB token | HTTP 410 envelope | BE-BR-AIRTIME-001 | `TZ-Tigo-SuperApp-AirTimeTopup › SessionValidationFilter` |
-| 3 | `apirequest.shortCode == _configuration.GetValue<string>("VerifySendMoney:TANQR"` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.VerifySendMoney` |
-| 4 | `short_code != null` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.VerifySendMoney` |
-| 5 | `request.languageCode == "en"` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.VerifySendMoney` |
-| 6 | `(!string.IsNullOrWhiteSpace(request.userCaseName` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.VerifySendMoney` |
-| 7 | `apiRequest.InclCOFee == true` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.VerifySendMoney` |
-| 8 | `(!string.IsNullOrWhiteSpace(request.userCaseName` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.VerifySendMoney` |
-| 9 | `calculateFeeResponse.ResultCode == "0"` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.VerifySendMoney` |
-| 10 | `queryResponse.ResultCode == "0"` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.VerifySendMoney` |
-| 11 | `serviceMethod == ""` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.VerifySendMoney` |
-| 12 | `resp?.responseData != null` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.VerifySendMoney` |
-| 13 | `_configuration.GetSection("EnableLog"` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.VerifySendMoney` |
-| 14 | `param is string` | branch / error envelope | — | `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.VerifySendMoney` |
+| 1 | Decrypt + session | 500 / 410 | BE-BR-AIRTIME-001 | `AirTimeController.VerifySendMoney` |
+| 2 | Force consumerID ← `VerifySendMoney:ConsumerID` per leg | — | — | `AirTimeRepository.VerifySendMoney` |
+| 3 | shortCode == `VerifySendMoney:TANQR` → tanqrshortcode by first-3 digits | 400 Invalid Alias | — | same |
+| 4 | Tigo rail if userCaseName==sendmoney OR shortCode in 50001/50024/50058 → CalculateFee (`VerifySendMoneyTigoToTigoURL`); InclCOFee → 50001 | else bill query | — | same |
+| 5 | Else MTPGBillQuery (`VerifySendMoneyTigoToOtherURL`) + TerminalType | — | — | same |
+| 6 | ResultCode `0` marks Status; GET `VerifySendMoney:OperatorsInformation?msisdn=` (errors swallowed) | aggregate any Status | — | same |
+| 7 | Remap ResultCode via CONFIG ResponseCodeApp | mapped fail | — | controller |
 
 ## Internal call chain
 1. Client POST `/api/AirTime/VerifySendMoney` with `{ payload }` envelope.
@@ -126,9 +128,12 @@ sequenceDiagram
 ```
 
 ## Downstream
-| Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
+| Order | Target | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| 1 | BE-API-CONFIG (ResponseCodeApp get-response-code-details) | Sync | after handler | responseCode, language, channel, optional service/method |
+| 1 | SOAP CalculateFee `VerifySendMoney:VerifySendMoneyTigoToTigoURL` | Sync | Tigo rail | ConsumerID, MSISDNs, Amount, ShortCode, InclCOFee |
+| 2 | SOAP MTPGBillQuery `VerifySendMoney:VerifySendMoneyTigoToOtherURL` | Sync | other | + PIN, TerminalType |
+| 3 | HTTP `VerifySendMoney:OperatorsInformation` | Sync | after MMP | msisdn |
+| 4 | EF tanqrshortcode | Sync | TANQR | prefix |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
@@ -171,9 +176,7 @@ Sample (synthetic):
 - Session validity: `BE-BR-AIRTIME-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `VerifySendMoney:ConsumerID`, `VerifySendMoney:TANQR`, `VerifySendMoney:VerifySendMoneyTigoToTigoURL`, `VerifySendMoney:VerifySendMoneyTigoToOtherURL`, `VerifySendMoney:TerminalType`, `VerifySendMoney:OperatorsInformation`, `TokenKey`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-AirTimeTopup/TZTigoSuperAppAirTimeTopup/Controllers/AirTimeController.cs › AirTimeController.VerifySendMoney` @ `7a52359`

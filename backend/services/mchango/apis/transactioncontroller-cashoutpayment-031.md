@@ -94,7 +94,8 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | No explicit guard parsed in action body | — | — | static parse |
+| 1 | Decrypt + session | 500 / 410 | BE-BR-MCHANGO-001 | `TransactionController.CashoutPayment` |
+| 2 | Nested creditParty `{key,value}`; history insert; msisdn starts 255; SOAP Cashout; success `walletmanagement-2004-0000-s` | fail | — | `TransactionService.CashoutPayment` |
 
 ## Internal call chain
 1. Client POST `/api/mobile/Transaction/CashoutPayment`.
@@ -111,9 +112,9 @@ sequenceDiagram
 ```
 
 ## Downstream
-| Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
+| Order | Target | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| — | none parsed beyond in-process services | — | — | — |
+| 1 | SOAP `CashOutPayment` | Sync | always | msisdn, mPin, amount, creditParty.value; Tanzania:Username/Password/ConsumerID |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
@@ -156,9 +157,7 @@ Sample (synthetic):
 - Session validity: `BE-BR-MCHANGO-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `CashOutPayment`, `Tanzania:Username`, `Tanzania:Password`, `Tanzania:ConsumerID`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-MChango/TZTigoMChangoService/Controllers/MobileControllers/TransactionController.cs › TransactionController.CashoutPayment` @ `7c288ab`
