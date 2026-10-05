@@ -98,9 +98,9 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | Decrypt `payload` with AES when config `is_encrypted`/`isEncrypted` is true; else JSON-deserialize | Filter stores raw string; later cast may fail → 500 | — | `TZ-Tigo-SuperApp-GroupSaving/GroupSavingMicroservice/Controllers/LoanController.cs › LoanController.GetLoan` |
-| 2 | `result != null && result.code == "0"` | branch / error envelope | — | `TZ-Tigo-SuperApp-GroupSaving/GroupSavingMicroservice/Controllers/LoanController.cs › LoanController.GetLoan` |
-| 3 | `_configuration.GetValue<string>("EnableLog:Error"` | branch / error envelope | — | `TZ-Tigo-SuperApp-GroupSaving/GroupSavingMicroservice/Controllers/LoanController.cs › LoanController.GetLoan` |
+| 1 | Decrypt; SessionValidation **off** | 500 / 410 if on | BE-BR-GRPSAV-001 | handler `GetLoan` |
+| 2 | No service-layer field validation; OAuth `Tanzania:GSApplyLoan` via Tanzania:GSToken + username/password/clientId/grantType/clientSecret | fail | — | `SavingService`/`LoanService.GetLoan` |
+| 3 | Success downstream `code == "0"` | fail envelope | — | `BaseService.SendAsync` |
 
 ## Internal call chain
 1. Client POST `/api/Loan/GetLoan` with `{ payload }` envelope.
@@ -124,9 +124,10 @@ sequenceDiagram
 ```
 
 ## Downstream
-| Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
+| Order | Target | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| 1 | BE-API-CONFIG (ResponseCodeApp get-response-code-details) | Sync | after handler | responseCode, language, channel, optional service/method |
+| 1 | OAuth `Tanzania:GSToken` | Sync | always | Tanzania:username, password, clientId, grantType, clientSecret |
+| 2 | HTTP `Tanzania:GSApplyLoan` | Sync | token ok | groupId, phoneNumber, amount, bParty, receipt |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
@@ -169,9 +170,7 @@ Sample (synthetic):
 - Session validity: `BE-BR-GRPSAV-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `Tanzania:GSApplyLoan`, `Tanzania:GSToken`, `Tanzania:username`, `Tanzania:password`, `Tanzania:clientId`, `Tanzania:grantType`, `Tanzania:clientSecret`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-GroupSaving/GroupSavingMicroservice/Controllers/LoanController.cs › LoanController.GetLoan` @ `ed4ac20`
