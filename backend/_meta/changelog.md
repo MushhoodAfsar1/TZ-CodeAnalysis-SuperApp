@@ -14,4 +14,4 @@ confidence: confirmed
 
 - 2026-10-05 — `run-all` static deep pass: inventory + per-action contracts for 29 repos (decrypted DTO where EncryptionProviderFilter/type index resolved).
 - 2026-10-05 — Merged `main` (PR #1) into `analysis/be/full-20261005`. Same-path add/add kept this branch. PR #1's extra `apis/*-post-api-*.md` copies (942) dropped as duplicates. Login flow kept PR #1's confirmed hops in `flows/login-registration-otp-session.md`.
-- 2026-10-05 — Refresh/deepen (`analysis/be/refresh-20261005`): SHAs unchanged vs coverage. Filed CONFIG Banner Create/Update as BE-API-CONFIG-431/432 (BE-GAP-009 closed). Nested DTOs + handler checks/downstream on WALLET, SEND, AIRTIME, EXTPAY, MERCH RTP/cash-out, LOAN repay/subscribe, SAVING Kibubu+/legacy, GRPSAV money, MCHANGO pay/cash-out/close, ACCOUNT OTP/login/registration. Full MERSET/MCHRPT/NOTSCH job contracts; dropped MCHRPT-004 false positive.
+- 2026-10-05 — Ops: BE analysis agents must open **exactly one PR** per run (`_meta/agent-instructions.md`). Extra PRs each start the frontend agent.

@@ -28,4 +28,4 @@ IDs: `BE-API-*` actions · `BE-BR-*` rules · `BE-ERR-*` errors · `BE-JOB-*` jo
 Confidence: confirmed (code at SHA) · partial (route/DTO ok, handler branches incomplete) · inferred.
 
 ## Index
-See [`_meta/coverage.md`](_meta/coverage.md) and [`_meta/repo-registry.md`](_meta/repo-registry.md).
+See [`_meta/coverage.md`](_meta/coverage.md), [`_meta/repo-registry.md`](_meta/repo-registry.md), and agent run rules in [`_meta/agent-instructions.md`](_meta/agent-instructions.md) (**one PR per run**).

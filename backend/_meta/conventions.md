@@ -32,3 +32,7 @@ confidence: confirmed
 ## Redaction
 Document field **names** and validation, never secrets, PII, hosts, or key material. Samples are synthetic.
 Contracts are the **decrypted** shape after AES payload unwrap.
+
+## Agent runs
+See [`agent-instructions.md`](agent-instructions.md). **One PR per run** — extra PRs trigger the frontend analysis agent.
+
