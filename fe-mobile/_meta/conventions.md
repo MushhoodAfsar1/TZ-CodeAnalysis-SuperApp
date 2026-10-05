@@ -14,11 +14,11 @@ confidence: confirmed
 | Prefix | Meaning | Rule |
 |---|---|---|
 | `API-####` | One live `callDioAPI` (a method with two endpoints gets two IDs) | Never reuse or renumber |
-| `SCR-####` | Screen, bottom sheet, or dialog that drives logic | Not assigned yet |
-| `FLW-####` | Multi-screen flow | Not assigned yet |
-| `BR-####` | Rule the app enforces or assumes | Not assigned yet |
+| `SCR-####` | Screen, bottom sheet, or dialog that drives logic | Next free `SCR-0019` |
+| `FLW-####` | Multi-screen flow | Next free `FLW-0008` |
+| `BR-####` | Rule the app enforces or assumes | Next free `BR-0020` |
 | `INT-####` | SDK or platform capability | Assigned from pubspec presence |
-| `GAP-####` | FE/BE mismatch | One row per fe-only API; be-only grouped by service |
+| `GAP-####` | FE/BE mismatch | Next free `GAP-0127`. One row per fe-only API; be-only grouped by service; contract diffs add their own rows |
 
 Backend IDs stay as published: `BE-API-<SERVICE>-###`.
 

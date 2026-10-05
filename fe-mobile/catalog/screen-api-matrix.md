@@ -11,7 +11,7 @@ confidence: partial
 ---
 # Screen → API matrix
 
-Rows below are the traced session/auth and money triggers. Other API IDs stay in [`api-catalog.md`](api-catalog.md) without a screen yet.
+Rows below are the traced session/auth, money, balance, airtime, and bill-pay triggers. Other API IDs stay in [`api-catalog.md`](api-catalog.md) without a screen yet.
 
 | Screen | API | Trigger | Condition(s) | Order | Fg/Bg | On success | On failure | BE | Conf. |
 |---|---|---|---|---|---|---|---|---|---|
@@ -35,3 +35,10 @@ Rows below are the traced session/auth and money triggers. Other API IDs stay in
 | SCR-0010 | API-0014 | Confirm | PIN length 4 | 1 | Fg | Receipt `transId` | Error | BE-API-SEND-011 contract-mismatch | partial |
 | SCR-0011 | API-0039 | Next, consumer | Amount in cash-out range | 1 | Fg | SCR-0012 | Error | BE-API-WALLET-001 matched | confirmed |
 | SCR-0012 | API-0041 | Confirm, consumer | PIN complete | 1 | Fg | Older receipt | Overdraft retry or error | BE-API-WALLET-002 matched | confirmed |
+| SCR-0013 | API-0018 | Dashboard landing | Logged in; about 600ms after start; refresh after 30s | 1 | Bg | Store `tigoPesa` / `savingPesa` / `wallet3` / `wallet4` | Flag balance failed, no dialog | BE-API-WALLET-006 contract-mismatch | partial |
+| Contact pick | API-0257 | Other-operator number | Number is not the logged-in user | 1 | Fg | SCR-0014 with operator min/max | Error or disabled snackbar | BE-API-AIRTIME-007 contract-mismatch | partial |
+| SCR-0015 | API-0258 | Confirm, other operator | PIN length 4 and `isOther` | 1 | Fg | Receipt `transactionId` | Overdraft retry or error | BE-API-AIRTIME-008 contract-mismatch | partial |
+| SCR-0015 | API-0259 | Confirm, own network | PIN length 4 and not `isOther` | 1 | Fg | Receipt `transactionId` | Overdraft retry or error | BE-API-AIRTIME-006 contract-mismatch | partial |
+| SCR-0016 | API-0034 | Next | Reference non-empty and amount valid | 1 | Fg | Continue with fee fields | Error dialog | BE-API-EXTPAY-001 contract-mismatch | partial |
+| SCR-0018 | API-0035 | Next | Control number length ≥ 7 | 1 | Fg | Bill amount and payer name | Error dialog | BE-API-EXTPAY-003 contract-mismatch | partial |
+| SCR-0017 | API-0037 | Confirm | PIN length 4 | 1 | Fg | Receipt fields including `transID` | Error dialog | BE-API-EXTPAY-002 contract-mismatch | partial |
