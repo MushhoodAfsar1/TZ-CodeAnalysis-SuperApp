@@ -116,19 +116,11 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | Decrypt `payload` with AES when config `is_encrypted`/`isEncrypted` is true; else JSON-deserialize | Filter stores raw string; later cast may fail → 500 | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/StandingOrderController.cs › StandingOrderController.ScheduleOrder` |
-| 2 | `!customerIdResponse.success \|\| customerIdResponse.responseData?.customer?.customer_id == null` | branch / error envelope | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/StandingOrderController.cs › StandingOrderController.ScheduleOrder` |
-| 3 | `string.IsNullOrWhiteSpace(request.Msisdn` | branch / error envelope | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/StandingOrderController.cs › StandingOrderController.ScheduleOrder` |
-| 4 | `string.IsNullOrWhiteSpace(request.OrderName` | branch / error envelope | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/StandingOrderController.cs › StandingOrderController.ScheduleOrder` |
-| 5 | `apiResponse.ResponseCode == 200` | branch / error envelope | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/StandingOrderController.cs › StandingOrderController.ScheduleOrder` |
-| 6 | `apiResponse.ResponseCode == 400` | branch / error envelope | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/StandingOrderController.cs › StandingOrderController.ScheduleOrder` |
-| 7 | `apiResponse.ResponseCode == 409` | branch / error envelope | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/StandingOrderController.cs › StandingOrderController.ScheduleOrder` |
-| 8 | `serviceMethod == ""` | branch / error envelope | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/StandingOrderController.cs › StandingOrderController.ScheduleOrder` |
-| 9 | `resp?.responseData != null` | branch / error envelope | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/StandingOrderController.cs › StandingOrderController.ScheduleOrder` |
-| 10 | `_configuration.GetValue<string>("EnableLog:Error"` | branch / error envelope | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/StandingOrderController.cs › StandingOrderController.ScheduleOrder` |
-| 11 | `param is string` | branch / error envelope | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/StandingOrderController.cs › StandingOrderController.ScheduleOrder` |
-| 12 | `_configuration.GetValue<string>("EnableLog:Error"` | branch / error envelope | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/StandingOrderController.cs › StandingOrderController.ScheduleOrder` |
-| 13 | `param is string` | branch / error envelope | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/StandingOrderController.cs › StandingOrderController.ScheduleOrder` |
+| 1 | Decrypt | 500 | — | `StandingOrderController.ScheduleOrder` |
+| 2 | `GetCustomerId`: MSISDN 255+12; token `GetTokenApiUrl` + `StandingOrderApiKey` | fail “Failed to retrieve customer…” | — | `StandingOrderRepository.ScheduleOrder` |
+| 3 | Validate Msisdn / OrderName | fail | — | same |
+| 4 | DB insert then Bearer POST `ScheduleOrderApiUrl` | 400 validation_failed; 409 duplicate; else failed | — | same |
+| 5 | HTTP 200 + status `active` | mapped fail | — | same |
 
 ## Internal call chain
 1. Client POST `/api/StandingOrder/ScheduleOrder` with `{ payload }` envelope.
@@ -154,9 +146,12 @@ sequenceDiagram
 ```
 
 ## Downstream
-| Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
+| Order | Target | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| 1 | BE-API-CONFIG (ResponseCodeApp get-response-code-details) | Sync | after handler | responseCode, language, channel, optional service/method |
+| 1 | HTTP `GetTokenApiUrl` | Sync | always | `StandingOrderApiKey` |
+| 2 | HTTP `GetCustomerIdApiUrl` | Sync | token ok | MSISDN |
+| 3 | HTTP `ScheduleOrderApiUrl` | Sync | after DB insert | customer_id, msisdn, order_name, dates, destination, amount, channel=mobile |
+| 4 | EF standing orders | W | always | persist |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
@@ -199,9 +194,7 @@ Sample (synthetic):
 - Session validity: `BE-BR-SEND-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `GetTokenApiUrl`, `StandingOrderApiKey`, `GetCustomerIdApiUrl`, `ScheduleOrderApiUrl`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/StandingOrderController.cs › StandingOrderController.ScheduleOrder` @ `599771b`

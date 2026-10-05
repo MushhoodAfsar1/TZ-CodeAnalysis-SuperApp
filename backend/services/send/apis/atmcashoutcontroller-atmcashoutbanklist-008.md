@@ -88,13 +88,10 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | Decrypt `payload` with AES when config `is_encrypted`/`isEncrypted` is true; else JSON-deserialize | Filter stores raw string; later cast may fail → 500 | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/ATMCashoutController.cs › ATMCashoutController.ATMCashoutBankList` |
-| 2 | Validate `X-User-Session` JWT (`TokenKey`) then Redis/DB token | HTTP 410 envelope | BE-BR-SEND-001 | `TZ-Tigo-SuperApp-SendMoney › SessionValidationFilter` |
-| 3 | `accessToken != null && !string.IsNullOrEmpty(accessToken.access_token` | branch / error envelope | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/ATMCashoutController.cs › ATMCashoutController.ATMCashoutBankList` |
-| 4 | `response.IsSuccessStatusCode` | branch / error envelope | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/ATMCashoutController.cs › ATMCashoutController.ATMCashoutBankList` |
-| 5 | `atmResponse.ResponseStatus.HasValue && atmResponse.ResponseStatus.Value == true` | branch / error envelope | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/ATMCashoutController.cs › ATMCashoutController.ATMCashoutBankList` |
-| 6 | `_configuration.GetValue<string>("EnableLog:Error"` | branch / error envelope | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/ATMCashoutController.cs › ATMCashoutController.ATMCashoutBankList` |
-| 7 | `param is string` | branch / error envelope | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/ATMCashoutController.cs › ATMCashoutController.ATMCashoutBankList` |
+| 1 | Decrypt payload | 500 | — | `ATMCashOutController.ATMCashOutBankList` |
+| 2 | Token: Redis `tokenRedisAtmCashout` else POST `ATMCashout:GetToken` (`Grant_Type`, `Username`, `Password`) | 400 Invalid token | — | `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Service/ATMCashoutService.cs › GetSupportedBanksList` |
+| 3 | Bearer POST `ATMCashout:CashoutBankList` | partner fail | — | same |
+| 4 | `ResponseStatus==true` | fail with partner codes | — | same |
 
 ## Internal call chain
 1. Client POST `/api/ATMCashout/GetATMCashoutBankList` with `{ payload }` envelope.
@@ -120,9 +117,10 @@ sequenceDiagram
 ```
 
 ## Downstream
-| Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
+| Order | Target | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| 1 | BE-API-CONFIG (ResponseCodeApp get-response-code-details) | Sync | after handler | responseCode, language, channel, optional service/method |
+| 1 | HTTP token `ATMCashout:GetToken` | Sync | cache miss | grant type, username, password keys |
+| 2 | HTTP `ATMCashout:CashoutBankList` | Sync | token ok | CustomerMSISDN + Bearer |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
@@ -165,9 +163,7 @@ Sample (synthetic):
 - Session validity: `BE-BR-SEND-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `ATMCashout:GetToken`, `ATMCashout:Grant_Type`, `ATMCashout:Username`, `ATMCashout:Password`, `ATMCashout:CashoutBankList`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-SendMoney/TZTigoSuperAppSendMoney/Controllers/ATMCashoutController.cs › ATMCashoutController.ATMCashoutBankList` @ `599771b`
