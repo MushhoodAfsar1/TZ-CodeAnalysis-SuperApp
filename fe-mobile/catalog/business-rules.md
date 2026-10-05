@@ -27,5 +27,13 @@ Rules the app enforces on the traced flows. SESS rules BR-0001–BR-0007 are the
 | BR-0010 | OTP length 20 on Android and 9 on iOS; resend after `otptimeout` or 60s | auth | yes | no | `AppUtil.getOTPMaxLength` | SCR-0004 | confirmed |
 | BR-0011 | Send amount between min and max; a wallet row is required | money | yes | BE amount is a decimal string, no app min | `SendMoneyEnterAmountController` | SCR-0009 | confirmed |
 | BR-0012 | Cash-out consumer sends `creditParty.key` `msisdn`; merchant and Mchango use other methods | money | yes | BE-API-WALLET-001 `creditParty.value` | `cashOutLookUp` | SCR-0011 | confirmed |
+| BR-0013 | ATM confirm is opened with fee string `"10.0"`. There is no fee API | money | yes | no | `AtmCashoutEnterAmountWidget.getNextButtonContainer` | SCR-0013, SCR-0014 | confirmed |
+| BR-0014 | After a bank is picked, amount must sit between that row's `MinAmount` and `MaxAmount`. Tiles are min, min × 20, and max | money | yes | partner list, not a BE check | bank `onChanged` | SCR-0013 | confirmed |
+| BR-0015 | Self airtime uses pre-login `airtimeMinLimit` / `airtimeMaxLimit` (fallback 100 and 10000). Other operators use the min and max passed into the screen | money | yes | no | `MobileTopupWidgetController` | SCR-0017 | confirmed |
+| BR-0016 | `isOther` false posts AirTimeTopUpV1. `isOther` true posts AirTimeTopUpOthers and adds `shortCode` and `operatorName` | money | yes | two AIRTIME actions | `creditAirTimeTopUpOthers` | SCR-0018 | confirmed |
+| BR-0017 | Other-bill amount must be at least 100 and not above the cached wallet `mainBalance` | money | yes | no | `EnterAmountForPayBillController` | SCR-0019 | confirmed |
+| BR-0018 | Government `asseType` is `ASSESS-A`, `ASSESS-C`, or `ASSESS-E` from the flow id and the control-number chip. Next requires a reference of length at least 7 | money | yes | DTO names the field `AsseType` | `requestGovPaymentInquiry` | SCR-0021 | confirmed |
+| BR-0019 | When pre-login `isvalentine` is true, category name `Valentine Day` sorts first, and a theme message `Event` supplies the gradient | gift | yes | no | `populateValentineDataAtTop`, `getThemes` | SCR-0024 | confirmed |
+| BR-0020 | Gift pay posts TransferSendMoney with `userCaseName` `giftMoney` and `customData` theme keys. It is not a separate path | gift | yes | BE-BR-SEND-006 when leg type is giftMoney | `requestSendMoneyProcessPaymentGift` | SCR-0025, SCR-0010 | confirmed |
 
-Next free rule ID: `BR-0013`.
+Next free rule ID: `BR-0021`.

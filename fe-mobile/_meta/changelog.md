@@ -10,6 +10,20 @@ confidence: confirmed
 ---
 # Changelog
 
+## 2026-10-05 — Gift history, themes, and gift pay
+
+- Traced gift history and themes (SCR-0023–0025, FLW-0009). Payment is API-0099 on the existing send-money confirm.
+- Contract-diffed API-0096–API-0099. Added GAP-0128–GAP-0130.
+- Match totals: path-only 263, contract-mismatch 19, matched 2, fe-only 83.
+
+## 2026-10-05 — ATM cash-out, airtime, and bills
+
+- Traced ATM cash-out (SCR-0013–0014, FLW-0006), airtime bundles and credit (SCR-0015–0018, FLW-0007), and other-bill plus government pay (SCR-0019–0022, FLW-0008).
+- Contract-diffed API-0034, API-0035, API-0037, API-0044, API-0158, API-0159, API-0258, and API-0259. Bundle catalog calls API-0023 and API-0024 stay `path-only`.
+- Match totals: path-only 267, contract-mismatch 15, matched 2, fe-only 83.
+- Added GAP-0119 (cited earlier, row was missing) through GAP-0127.
+- Did not copy or extend the merged `mobile/` SESS tree.
+
 ## 2026-10-05 — Session, auth, and money deep pass
 
 - Pinned the backend KB to `main` @ `0c13cc4` (contract deepen). FE stays `6328b7254`.

@@ -33,4 +33,12 @@ Dashboard Mixx transfer → contact pick → `SendMoneyEnterAmountWidget` → `S
 
 Cash-out icon → recents → `CashPointEnterAmountWidget` → `CashPointConfirmationWidget` → `OlderReceiptScrollWidget`.
 
+ATM cash-out → `AtmCashoutEnterAmountWidget` → `AtmCashoutConfirmationWidget` → success sheet → `NewBottomNavigationBarWidget`.
+
+Airtime bundles → `AirTimeTopUpsWidget` → `AirTimeTopUpsConfirmationWidget` → receipt. Credit top-up → `MobileTopupWidget` → `MobileTopUPConfirmationWidget` → receipt.
+
+Other bills → `EnterAmountForPayBillWidget` → `OtherBillsPayConfirmationWidget` → receipt. Government → `EnterControlNumberWidget` → `GovBillsEnterAmountWidget` → `BillPayRegistrationConfirmationWidget` → receipt.
+
+Gift history → contact → `TanzaniaGiftWidget` → `TanzaniaGiftPreviewWidget` → `SendMoneyConfirmationWidget` (gift body).
+
 Screen IDs: [../catalog/screen-catalog.md](../catalog/screen-catalog.md).
