@@ -92,17 +92,11 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | Decrypt `payload` with AES when config `is_encrypted`/`isEncrypted` is true; else JSON-deserialize | Filter stores raw string; later cast may fail → 500 | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.LoginProfile` |
-| 2 | Device not blocked | HTTP 423 | BE-BR-ACCOUNT-002 | `TZ-Tigo-SuperApp-Account › DeviceFilter` |
-| 3 | `profile != null \|\| request.ismerchant == true` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.LoginProfile` |
-| 4 | `profile != null && isFirstLogin == false` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.LoginProfile` |
-| 5 | `request.ismerchant != true` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.LoginProfile` |
-| 6 | `device != null \|\| request.ismerchant` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.LoginProfile` |
-| 7 | `status[0]?.InnerText == "OK"` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.LoginProfile` |
-| 8 | `profile == null && request.ismerchant == true` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.LoginProfile` |
-| 9 | `request.pushUpdateStatus == true` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.LoginProfile` |
-| 10 | `data != null` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.LoginProfile` |
-| 11 | `_configuration.GetValue<string>("EnableLog:Error"` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.LoginProfile` |
+| 1 | Decrypt + DeviceFilter | 500 | — | `ProfileController.LoginProfile` |
+| 2 | Profile or merchant; OTP-verified device unless merchant | fail | — | `ProfileService.LoginProfile` |
+| 3 | SOAP AuthenticateUser `LoginURL` status OK/ERROR | fail | — | same |
+| 4 | Session client SMM POST `api/Account/auth` base `Session:Configuration` | fail session | — | `SessionManagement.EstablishSession` |
+| 5 | Optional FCM update (`pushUpdateStatus`) | — | — | same |
 
 ## Internal call chain
 1. Client POST `/api/Profile/LoginProfile` with `{ payload }` envelope.
@@ -127,9 +121,11 @@ sequenceDiagram
 ```
 
 ## Downstream
-| Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
+| Order | Target | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| 1 | BE-API-CONFIG (ResponseCodeApp get-response-code-details) | Sync | after handler | responseCode, language, channel, optional service/method |
+| 1 | SOAP `LoginURL` | Sync | always | msisdn, mpin; `Tanzania:Login:Username\|Password\|consumerID` |
+| 2 | HTTP SMM `Session:Configuration` + `api/Account/auth` | Sync | auth OK | session tokens |
+| 3 | FCM | Sync | pushUpdateStatus | token |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
@@ -172,9 +168,7 @@ Sample (synthetic):
 - Session validity: `BE-BR-ACCOUNT-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `LoginURL`, `Tanzania:Login:Username`, `Tanzania:Login:Password`, `Tanzania:Login:consumerID`, `Session:Configuration`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.LoginProfile` @ `5c549d6`

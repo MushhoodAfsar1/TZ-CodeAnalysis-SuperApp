@@ -90,11 +90,10 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | Decrypt `payload` with AES when config `is_encrypted`/`isEncrypted` is true; else JSON-deserialize | Filter stores raw string; later cast may fail → 500 | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/OtpController.cs › OtpController.GenerateOtp` |
-| 2 | `profile != null` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/OtpController.cs › OtpController.GenerateOtp` |
-| 3 | `!deviceLimitResult.IsAllowed` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/OtpController.cs › OtpController.GenerateOtp` |
-| 4 | `otpStatus == true` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/OtpController.cs › OtpController.GenerateOtp` |
-| 5 | `_configuration.GetValue<string>("EnableLog:Error"` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/OtpController.cs › OtpController.GenerateOtp` |
+| 1 | Decrypt payload | 500 | — | `OtpController.GenerateOtp` |
+| 2 | Profile must exist | fail | — | `OtpService.GenerateOtp` |
+| 3 | Device-limit via appconfig `deviceRegistrationLimit` / `deviceRegistrationTimePeriod` (UM-Lo-14) | blocked | BE-BR-ACCOUNT-OTP | same |
+| 4 | Generate OTP; SMS `SendSMS` (`OTPSource`, `OtpSMSKeyforAutoFetch`, `OtpLength`, `OtpExpiryInSec`); optional email SOAP `SendEMail` | SMS success UM-Lo-08 | — | same |
 
 ## Internal call chain
 1. Client POST `/api/Otp/GenerateOtp` with `{ payload }` envelope.
@@ -119,9 +118,11 @@ sequenceDiagram
 ```
 
 ## Downstream
-| Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
+| Order | Target | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| 1 | BE-API-CONFIG (ResponseCodeApp get-response-code-details) | Sync | after handler | responseCode, language, channel, optional service/method |
+| 1 | SMS `SendSMS` | Sync | always | msisdn, otp (not logged) |
+| 2 | Email SOAP `SendEMail` | Sync | email path | `Tanzania:SendOTP:Username\|Password\|consumerID\|SenderEmail` |
+| 3 | HTTP `DeviceDetails` / `GoogleAPIKey` | Sync | device/city | msisdn |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
@@ -164,9 +165,7 @@ Sample (synthetic):
 - Session validity: `BE-BR-ACCOUNT-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `SendSMS`, `OTPSource`, `OtpSMSKeyforAutoFetch`, `OtpLength`, `OtpExpiryInSec`, `SendEMail`, `Tanzania:SendOTP:Username`, `Tanzania:SendOTP:Password`, `Tanzania:SendOTP:consumerID`, `Tanzania:SendOTP:SenderEmail`, `DeviceDetails`, `GoogleAPIKey`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/OtpController.cs › OtpController.GenerateOtp` @ `5c549d6`

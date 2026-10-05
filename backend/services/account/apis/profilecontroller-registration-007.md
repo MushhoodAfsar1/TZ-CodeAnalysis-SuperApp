@@ -115,15 +115,9 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | Decrypt `payload` with AES when config `is_encrypted`/`isEncrypted` is true; else JSON-deserialize | Filter stores raw string; later cast may fail → 500 | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.Registration` |
-| 2 | `profile != null` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.Registration` |
-| 3 | `device != null` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.Registration` |
-| 4 | `string.IsNullOrEmpty(request.profileimage` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.Registration` |
-| 5 | `string.IsNullOrEmpty(request.nicfrontimage` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.Registration` |
-| 6 | `string.IsNullOrEmpty(request.nicbackimage` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.Registration` |
-| 7 | `statusS[0] != null` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.Registration` |
-| 8 | `statusS[0]?.InnerText == "OK"` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.Registration` |
-| 9 | `_configuration.GetValue<string>("EnableLog:Error"` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.Registration` |
+| 1 | Decrypt | 500 | — | `ProfileController.Registration` |
+| 2 | profilestatus==false; OTP-verified device | fail | — | `ProfileService.Registration` |
+| 3 | Optional blob if images; SOAP ChangePin `ChangePin` | fail | — | same |
 
 ## Internal call chain
 1. Client POST `/api/Profile/Registration` with `{ payload }` envelope.
@@ -148,9 +142,10 @@ sequenceDiagram
 ```
 
 ## Downstream
-| Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
+| Order | Target | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| 1 | BE-API-CONFIG (ResponseCodeApp get-response-code-details) | Sync | after handler | responseCode, language, channel, optional service/method |
+| 1 | SOAP `ChangePin` | Sync | always | newMpin; `Tanzania:Registration:Username\|Password\|consumerID` |
+| 2 | Azure blob | Sync | images present | container keys |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
@@ -193,9 +188,7 @@ Sample (synthetic):
 - Session validity: `BE-BR-ACCOUNT-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `ChangePin`, `Tanzania:Registration:Username`, `Tanzania:Registration:Password`, `Tanzania:Registration:consumerID`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/ProfileController.cs › ProfileController.Registration` @ `5c549d6`

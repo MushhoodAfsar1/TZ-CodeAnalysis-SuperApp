@@ -88,12 +88,9 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | Decrypt `payload` with AES when config `is_encrypted`/`isEncrypted` is true; else JSON-deserialize | Filter stores raw string; later cast may fail → 500 | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/OtpController.cs › OtpController.VerifyOtpV1` |
-| 2 | `profile == null` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/OtpController.cs › OtpController.VerifyOtpV1` |
-| 3 | `cacheBlockingData == null` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/OtpController.cs › OtpController.VerifyOtpV1` |
-| 4 | `cacheBlockingData.ToString(` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/OtpController.cs › OtpController.VerifyOtpV1` |
-| 5 | `failedAttempts > otpConfigs.InvalidOtpLimit` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/OtpController.cs › OtpController.VerifyOtpV1` |
-| 6 | `_configuration.GetValue<string>("EnableLog:Error"` | branch / error envelope | — | `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/OtpController.cs › OtpController.VerifyOtpV1` |
+| 1 | Decrypt | 500 | — | `OtpController.VerifyOtpV1` |
+| 2 | Redis match; failed-attempt → BLOCKED (`InvalidOtpLimit`, `TempBlockOtpTimeLimit`) | BLOCKED | BE-BR-ACCOUNT-OTP | `OtpService.VerifyOtpV1` |
+| 3 | On OK AddUpdateDevice + FCM | — | — | same |
 
 ## Internal call chain
 1. Client POST `/api/Otp/VerifyOtpV1` with `{ payload }` envelope.
@@ -118,9 +115,9 @@ sequenceDiagram
 ```
 
 ## Downstream
-| Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
+| Order | Target | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| 1 | BE-API-CONFIG (ResponseCodeApp get-response-code-details) | Sync | after handler | responseCode, language, channel, optional service/method |
+| 1 | Redis + DeviceDetails + FCM | Sync | success | device |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
@@ -163,9 +160,7 @@ Sample (synthetic):
 - Session validity: `BE-BR-ACCOUNT-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `InvalidOtpLimit`, `TempBlockOtpTimeLimit`, `DeviceDetails`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-Account/TZTigoSuperAppAccount/Controllers/OtpController.cs › OtpController.VerifyOtpV1` @ `5c549d6`
