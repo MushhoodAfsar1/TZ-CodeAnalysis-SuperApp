@@ -12,4 +12,4 @@ confidence: partial
 
 # Integrations
 
-Named HttpClients: `CMM`→CONFIG, `SMM`→SESS (Account), `IdentityApi`→IDENT (CONFIG). External MMP/Tigopesa/NIDA/biller URLs are config-driven; hosts omitted. See each `services/*/integrations.md`.
+Named HttpClients: `CMM`→CONFIG, `SMM`→SESS (Account), `IdentityApi`→IDENT (CONFIG). External MMP/Tigopesa/NIDA/biller URLs are config-driven; hosts omitted. Money-path URL **keys** (not hosts): WALLET `CashOutFee`/`CashOutPayment`/`MTPGGetBalance`; SEND `TransferSendMoneyTigoToTigoURL`/`TransferSendMoneyTigoToOtherURL`/`TransactionStatus`; AIRTIME `AirTimeTopUp`/`MTPGPaymentRequest:URL`; EXTPAY `SuperAppMTPGPayment`/`BankTransferPayment`/`GovernmentInquirytoGEPG`. See each `services/*/integrations.md`.
