@@ -84,14 +84,9 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | `!request.SourceMSISDN.StartsWith("255"` | branch / error envelope | — | `TZ-Tigo-SuperApp-MChango/TZTigoMChangoService/Controllers/MobileControllers/TransactionController.cs › TransactionController.SendMoneySubmit` |
-| 2 | `decimal.Parse(request.Amount` | branch / error envelope | — | `TZ-Tigo-SuperApp-MChango/TZTigoMChangoService/Controllers/MobileControllers/TransactionController.cs › TransactionController.SendMoneySubmit` |
-| 3 | `!string.IsNullOrEmpty(tanQrMarker` | branch / error envelope | — | `TZ-Tigo-SuperApp-MChango/TZTigoMChangoService/Controllers/MobileControllers/TransactionController.cs › TransactionController.SendMoneySubmit` |
-| 4 | `string.IsNullOrEmpty(request.TargetMSISDN` | branch / error envelope | — | `TZ-Tigo-SuperApp-MChango/TZTigoMChangoService/Controllers/MobileControllers/TransactionController.cs › TransactionController.SendMoneySubmit` |
-| 5 | `short_code != null` | branch / error envelope | — | `TZ-Tigo-SuperApp-MChango/TZTigoMChangoService/Controllers/MobileControllers/TransactionController.cs › TransactionController.SendMoneySubmit` |
-| 6 | `request.IsTip` | branch / error envelope | — | `TZ-Tigo-SuperApp-MChango/TZTigoMChangoService/Controllers/MobileControllers/TransactionController.cs › TransactionController.SendMoneySubmit` |
-| 7 | `!Status` | branch / error envelope | — | `TZ-Tigo-SuperApp-MChango/TZTigoMChangoService/Controllers/MobileControllers/TransactionController.cs › TransactionController.SendMoneySubmit` |
-| 8 | `request.OverdraftBrandID != null` | branch / error envelope | — | `TZ-Tigo-SuperApp-MChango/TZTigoMChangoService/Controllers/MobileControllers/TransactionController.cs › TransactionController.SendMoneySubmit` |
+| 1 | Decrypt + session | 500 / 410 | BE-BR-MCHANGO-001 | `TransactionController.SendMoneySubmit` |
+| 2 | Per item: SourceMSISDN starts 255; Amount>0; optional TANQR; IsTip + prior fail → abort; write history; SOAP | fail | — | `TransactionService.SendMoneySubmit` |
+| 3 | URL `SendMoneyPayment`; ConsumerID `Tanzania:SendMoneyFeeCheck:ConsumerID:{CHANNEL}` | fail | — | same |
 
 ## Internal call chain
 1. Client POST `/api/mobile/Transaction/SendMoneySubmit`.
@@ -108,9 +103,9 @@ sequenceDiagram
 ```
 
 ## Downstream
-| Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
+| Order | Target | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| — | none parsed beyond in-process services | — | — | — |
+| 1 | SOAP/XML `SendMoneyPayment` | Sync | always | transferMoney[] |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
@@ -153,9 +148,7 @@ Sample (synthetic):
 - Session validity: `BE-BR-MCHANGO-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `SendMoneyPayment`, `Tanzania:SendMoneyFeeCheck:ConsumerID:{{CHANNEL}}`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-MChango/TZTigoMChangoService/Controllers/MobileControllers/TransactionController.cs › TransactionController.SendMoneySubmit` @ `7c288ab`

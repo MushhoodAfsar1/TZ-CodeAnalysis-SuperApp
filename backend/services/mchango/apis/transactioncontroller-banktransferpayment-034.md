@@ -99,7 +99,8 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | No explicit guard parsed in action body | — | — | static parse |
+| 1 | Decrypt + session | 500 / 410 | BE-BR-MCHANGO-001 | `TransactionController.BankTransferPayment` |
+| 2 | SourceMSISDN 255*; Amount>0; history; XML MTPGPaymentRequest | fail | — | `TransactionService.BankTransferPayment` |
 
 ## Internal call chain
 1. Client POST `/api/mobile/Transaction/BankTransferPayment`.
@@ -116,9 +117,9 @@ sequenceDiagram
 ```
 
 ## Downstream
-| Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
+| Order | Target | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| — | none parsed beyond in-process services | — | — | — |
+| 1 | SOAP `BankTransferPayment` | Sync | always | ChannelUser/Pass, SourceMSISDN, TargetRefNumber, Amount, ShortCode; ConsumerID channel key |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
@@ -161,9 +162,7 @@ Sample (synthetic):
 - Session validity: `BE-BR-MCHANGO-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `BankTransferPayment`, `Tanzania:SendMoneyFeeCheck:ConsumerID:{{CHANNEL}}`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-MChango/TZTigoMChangoService/Controllers/MobileControllers/TransactionController.cs › TransactionController.BankTransferPayment` @ `7c288ab`
