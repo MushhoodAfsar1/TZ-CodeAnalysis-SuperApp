@@ -57,7 +57,9 @@ Wire envelope (encrypted or plaintext JSON string in `payload`). Table below is 
 | `pushId` | `string?` | N | — | shape only | pushId |
 | `deviceType` | `string?` | N | — | shape only | deviceType |
 | `isMerchant` | `bool?` | N | — | shape only | isMerchant |
-| `transferMoney` | `List<TransferMoney>?` | N | — | shape only | transferMoney |
+| `transferMoney` | `List<TransferMoney>` | Y | legs | foreach | R2P debit |
+| `transferMoney[].referenceID` | `string?` | Y | R2P row | repository | R2P id |
+| `isMerchant` | `bool?` | N | — | repository | merchant flag |
 
 Headers / route / query params: none parsed beyond action signature `[('msg', 'RequestModel')]`
 
@@ -88,20 +90,10 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | Decrypt `payload` with AES when config `is_encrypted`/`isEncrypted` is true; else JSON-deserialize | Filter stores raw string; later cast may fail → 500 | — | `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/RequestToPayController.cs › RequestToPayController.TransferSendMoney` |
-| 2 | Validate `X-User-Session` JWT (`TokenKey`) then Redis/DB token | HTTP 410 envelope | BE-BR-MERCH-001 | `TZ-Tigo-SuperApp-Merchant › SessionValidationFilter` |
-| 3 | `request.transferMoney.Any(` | branch / error envelope | — | `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/RequestToPayController.cs › RequestToPayController.TransferSendMoney` |
-| 4 | `string.IsNullOrEmpty(transferMoneyReq.referenceID` | branch / error envelope | — | `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/RequestToPayController.cs › RequestToPayController.TransferSendMoney` |
-| 5 | `requestToPay == null` | branch / error envelope | — | `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/RequestToPayController.cs › RequestToPayController.TransferSendMoney` |
-| 6 | `transferMoneyReq.isTip` | branch / error envelope | — | `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/RequestToPayController.cs › RequestToPayController.TransferSendMoney` |
-| 7 | `!Status` | branch / error envelope | — | `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/RequestToPayController.cs › RequestToPayController.TransferSendMoney` |
-| 8 | `transferMoneyReq.shortCode == _configuration.GetValue<string>("TANQR"` | branch / error envelope | — | `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/RequestToPayController.cs › RequestToPayController.TransferSendMoney` |
-| 9 | `short_code != null` | branch / error envelope | — | `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/RequestToPayController.cs › RequestToPayController.TransferSendMoney` |
-| 10 | `request.languageCode == "en"` | branch / error envelope | — | `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/RequestToPayController.cs › RequestToPayController.TransferSendMoney` |
-| 11 | `serviceMethod == ""` | branch / error envelope | — | `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/RequestToPayController.cs › RequestToPayController.TransferSendMoney` |
-| 12 | `resp?.responseData != null` | branch / error envelope | — | `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/RequestToPayController.cs › RequestToPayController.TransferSendMoney` |
-| 13 | `_configuration.GetValue<string>("EnableLog:Error"` | branch / error envelope | — | `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/RequestToPayController.cs › RequestToPayController.TransferSendMoney` |
-| 14 | `param is string` | branch / error envelope | — | `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/RequestToPayController.cs › RequestToPayController.TransferSendMoney` |
+| 1 | Decrypt + session | 500 / 410 | BE-BR-MERCH-001 | `RequestToPayController.TransferSendMoney` |
+| 2 | referenceID required; R2P exists; not APPROVED/FAILED/expired; tip gate; TANQR | 400 | — | `RequestToPayService.TransferSendMoney` |
+| 3 | SOAP SendMoneyRequest `TransferSendMoneyTigoToTigoURL`; exception → TransactionStatus Tanzania:MSIDN/PIN | — | — | same |
+| 4 | Success 0/200102/200109/99999; save ReqToPayTransfer; 200102/100001→PENDING else APPROVED/FAILED + FCM | fail | — | same |
 
 ## Internal call chain
 1. Client POST `/api/RequestToPay/TransferSendMoney` with `{ payload }` envelope.
@@ -128,9 +120,12 @@ sequenceDiagram
 ```
 
 ## Downstream
-| Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
+| Order | Target | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| 1 | BE-API-CONFIG (ResponseCodeApp get-response-code-details) | Sync | after handler | responseCode, language, channel, optional service/method |
+| 1 | SOAP `TransferSendMoneyTigoToTigoURL` | Sync | always | transferMoney[] |
+| 2 | SOAP `TransactionStatus` | Sync | exception | Tanzania:MSIDN, Tanzania:PIN |
+| 3 | EF ReqToPayTransfer / RequestToPay | W | always | encrypt consumerid |
+| 4 | FCM | Sync | terminal status | notify |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
@@ -173,9 +168,7 @@ Sample (synthetic):
 - Session validity: `BE-BR-MERCH-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `Tanzania:ConsumerID`, `TANQR`, `TerminalType`, `TransferSendMoneyTigoToTigoURL`, `TransactionStatus`, `Tanzania:MSIDN`, `Tanzania:PIN`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-Merchant/TZTigoSuperAppMerchant/Controllers/RequestToPayController.cs › RequestToPayController.TransferSendMoney` @ `2367767`
