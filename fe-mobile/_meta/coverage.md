@@ -11,7 +11,7 @@ confidence: partial
 
 # Coverage
 
-FE `main` @ `6328b7254`. Backend KB `main` @ `0c13cc4`. API inventory is done. Session/auth and the primary send-money and agent cash-out paths are `deep-analyzed`. Other feature rows stay `not-started`.
+FE `main` @ `6328b7254`. Backend KB `main` @ `0c13cc4`. API inventory is done. Session/auth, send money, agent cash-out, ATM cash-out, and airtime are `deep-analyzed`. Bill payment is `partial` (other bills and government pay traced; favorites, Zanzibar, and QR not). Other feature rows stay `not-started`.
 
 | Feature slug | FE paths (main) | Screens | APIs touched | Status | analyzed_sha | Updated | Notes |
 |---|---|---:|---:|---|---|---|---|
@@ -19,11 +19,11 @@ FE `main` @ `6328b7254`. Backend KB `main` @ `0c13cc4`. API inventory is done. S
 | `add_notification` | `lib/ui/controllers/add_notification/` | 0 | 3 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `advance_salary` | `lib/ui/controllers/advance_salary/` | 0 | 5 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `aft` | `lib/ui/controllers/aft/` | 0 | 3 | not-started | — | 2026-10-05 | Screen inventory not started. |
-| `airtimetopups` | `lib/ui/controllers/airtimetopups/` | 0 | 5 | not-started | — | 2026-10-05 | Screen inventory not started. |
+| `airtimetopups` | `lib/ui/controllers/airtimetopups/` | 4 | 5 | deep-analyzed | `6328b7254` | 2026-10-05 | SCR-0015–0018, FLW-0007. Bundle list stays path-only. Revamp top-up shares API-0258/0259 and has no screen ID. |
 | `appmedia` | `lib/ui/controllers/appmedia/` | 0 | 1 | not-started | — | 2026-10-05 | Screen inventory not started. |
-| `atm_cashout` | `lib/ui/controllers/atm_cashout/` | 0 | 2 | not-started | — | 2026-10-05 | Screen inventory not started. |
+| `atm_cashout` | `lib/ui/controllers/atm_cashout/` | 2 | 2 | deep-analyzed | `6328b7254` | 2026-10-05 | SCR-0013–0014, FLW-0006. No fee API. Request casing is contract-mismatch. |
 | `bankaccounts` | `lib/ui/controllers/bankaccounts/` | 0 | 7 | not-started | — | 2026-10-05 | Screen inventory not started. |
-| `billpayment` | `lib/ui/controllers/billpayment/` | 0 | 6 | not-started | — | 2026-10-05 | Screen inventory not started. |
+| `billpayment` | `lib/ui/controllers/billpayment/` | 4 | 6 | partial | `6328b7254` | 2026-10-05 | SCR-0019–0022, FLW-0008. Favorites, Zanzibar widget, and QR not traced. API-0012 list call named only. |
 | `block_my_number` | `lib/ui/controllers/block_my_number/` | 0 | 2 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `bus_ticketing` | `lib/ui/controllers/bus_ticketing/` | 0 | 6 | not-started | — | 2026-10-05 | Screen inventory not started. |
 | `card_theme` | `lib/ui/controllers/card_theme/` | 0 | 0 | not-started | — | 2026-10-05 | Screen inventory not started. |
@@ -122,7 +122,7 @@ FE `main` @ `6328b7254`. Backend KB `main` @ `0c13cc4`. API inventory is done. S
 | `utils` | — | 0 | 3 | not-started | — | 2026-10-05 | Caller files outside a feature folder, or no caller. |
 | `(no caller file)` | — | 0 | 39 | not-started | — | 2026-10-05 | Caller files outside a feature folder, or no caller. |
 
-API totals: 367 live · path-only 275 · contract-mismatch 7 · matched 2 · fe-only 83 · gaps 118.
+API totals: 367 live · path-only 267 · contract-mismatch 15 · matched 2 · fe-only 83 · gaps 127.
 
-Deep-analyzed or partial this pass: splash, login, otp, onboarding, registration_onboarding, pinchanger, pincode, homepage (session hook), sendmoney (P2P), cash_point. Remaining feature rows are `not-started`.
+Deep-analyzed or partial: splash, login, otp, onboarding, registration_onboarding, pinchanger, pincode, homepage (session hook), sendmoney (P2P), cash_point, atm_cashout, airtimetopups, billpayment (partial). Remaining feature rows are `not-started`.
 

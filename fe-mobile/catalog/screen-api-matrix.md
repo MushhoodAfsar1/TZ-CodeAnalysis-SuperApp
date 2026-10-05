@@ -35,3 +35,14 @@ Rows below are the traced session/auth and money triggers. Other API IDs stay in
 | SCR-0010 | API-0014 | Confirm | PIN length 4 | 1 | Fg | Receipt `transId` | Error | BE-API-SEND-011 contract-mismatch | partial |
 | SCR-0011 | API-0039 | Next, consumer | Amount in cash-out range | 1 | Fg | SCR-0012 | Error | BE-API-WALLET-001 matched | confirmed |
 | SCR-0012 | API-0041 | Confirm, consumer | PIN complete | 1 | Fg | Older receipt | Overdraft retry or error | BE-API-WALLET-002 matched | confirmed |
+| SCR-0013 | API-0158 | Open | — | 1 | Fg | Fill `ListOfATM` | Error dialog, empty dropdown | BE-API-SEND-008 contract-mismatch | confirmed |
+| SCR-0014 | API-0159 | Confirm | PIN length 4 | 1 | Fg | Sheet shows `transactionStatus`, then consumer shell | Clear PIN | BE-API-SEND-009 contract-mismatch | confirmed |
+| SCR-0015 | API-0023 | Load | Receiver MSISDN | 1 | Bg | `boBundles` | Error in controller | BE-API-CONFIG-356 path-only | confirmed |
+| SCR-0015 | API-0024 | Load | Same screen | 2 | Bg | Saizi Yako products | Error in controller | BE-API-CONFIG-358 path-only | confirmed |
+| SCR-0016 | API-0044 | Confirm bundle | PIN present | 1 | Fg | Receipt `transactionId` | Error | BE-API-GSM-013 contract-mismatch | confirmed |
+| SCR-0018 | API-0259 | Confirm, self | PIN length 4 | 1 | Fg | Receipt, or overdraft retry | Clear PIN | BE-API-AIRTIME-006 contract-mismatch | confirmed |
+| SCR-0018 | API-0258 | Confirm, other operator | PIN length 4 and `isOther` | 1 | Fg | Receipt, or overdraft retry | Clear PIN | BE-API-AIRTIME-008 contract-mismatch | confirmed |
+| SCR-0019 | API-0034 | Next | Amount ≥ 100 and within cached balance | 1 | Fg | SCR-0020 with fee and payer | Error | BE-API-EXTPAY-001 contract-mismatch | confirmed |
+| SCR-0020 | API-0037 | Confirm | PIN length 4 | 1 | Fg | Receipt | Error | BE-API-EXTPAY-002 contract-mismatch | partial |
+| SCR-0021 | API-0035 | Next | Reference length ≥ 7 | 1 | Fg | SCR-0022 or bill picker | Error or stay if no bills | BE-API-EXTPAY-003 contract-mismatch | confirmed |
+| SCR-0022 | API-0037 | Confirm | PIN length 4 | 1 | Fg | Receipt, or overdraft sheet | Error | BE-API-EXTPAY-002 contract-mismatch | partial |

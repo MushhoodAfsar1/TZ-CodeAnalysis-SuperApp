@@ -27,5 +27,15 @@ IDs assigned for the session/auth path and the primary money paths. Other featur
 | SCR-0010 | Send money confirm | sendmoney | FLW-0004 | API-0014 |
 | SCR-0011 | Cash-point amount | cash_point | FLW-0005 | API-0039, API-0040 |
 | SCR-0012 | Cash-point confirm | cash_point | FLW-0005 | API-0041, API-0042 |
+| SCR-0013 | ATM cash-out amount | atm_cashout | FLW-0006 | API-0158 |
+| SCR-0014 | ATM cash-out confirm | atm_cashout | FLW-0006 | API-0159 |
+| SCR-0015 | Airtime bundles | airtimetopups | FLW-0007 | API-0023, API-0024 |
+| SCR-0016 | Bundle confirm | airtimetopups | FLW-0007 | API-0044 |
+| SCR-0017 | Credit top-up amount | airtimetopups | FLW-0007 | — |
+| SCR-0018 | Credit top-up confirm | airtimetopups | FLW-0007 | API-0258, API-0259 |
+| SCR-0019 | Other-bill amount | billpayment | FLW-0008 | API-0034 |
+| SCR-0020 | Other-bill confirm | billpayment | FLW-0008 | API-0037 |
+| SCR-0021 | Government control number | billpayment | FLW-0008 | API-0035 |
+| SCR-0022 | Government bill pay | billpayment | FLW-0008 | API-0037 |
 
-Next free screen ID: `SCR-0013`.
+Next free screen ID: `SCR-0023`.
