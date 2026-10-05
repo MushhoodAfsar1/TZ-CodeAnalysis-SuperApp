@@ -4,12 +4,15 @@ type: service
 ids: [BE-SVC-AUDIT]
 service: AUDIT
 repo: TZ-Tigo-SuperApp-AuditLogs
-repo_ref: cursor/superapp-backend-documentation-6fa7
+repo_ref: cursor/superapp-backend-documentation-cf53
 repo_sha: eb87819
 updated: 2026-10-05
-confidence: confirmed
+confidence: partial
 ---
-# BE-SVC-AUDIT data model
 
-See EF DbContext in the service project. IDENT: `ApplicationUser` (Identity) + roles/claims. SESS: `Tokens` (msisdn, deviceid, access/refresh, expiries).
+# Data model — AUDIT
 
+| Entity | Table | Source |
+|---|---|---|
+| `BaseResponse` | `—` | `TZTigoSuperAppAuditLogs/Domain/App/BaseResponse.cs` |
+| `CloudStorage` | `—` | `TZTigoSuperAppAuditLogs/Domain/Implementation/CloudStorage.cs` |

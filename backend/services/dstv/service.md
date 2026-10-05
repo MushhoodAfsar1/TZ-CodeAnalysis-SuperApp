@@ -4,47 +4,53 @@ type: service
 ids: [BE-SVC-DSTV]
 service: DSTV
 repo: TZ-Tigo-SuperApp-DigitalSubscription
-repo_ref: cursor/superapp-backend-documentation-6fa7
+repo_ref: cursor/superapp-backend-documentation-cf53
 repo_sha: fd31aa1
 updated: 2026-10-05
 confidence: confirmed
 ---
-# BE-SVC-DSTV TZ-Tigo-SuperApp-DigitalSubscription
-**Repo:** `TZ-Tigo-SuperApp-DigitalSubscription` · **Type:** service · **Stack:** ASP.NET Core net8.0 (PORTAL: Angular) · **Ref/SHA:** `fd31aa1`
-**Purpose:** Digital subscriptions
+
+# BE-SVC-DSTV Digital / DSTV subscriptions
+**Repo:** `TZ-Tigo-SuperApp-DigitalSubscription` · **Type:** service · **Stack:** net8.0 · **Ref/SHA:** `cursor/superapp-backend-documentation-cf53` / `fd31aa1`
+**Purpose:** Digital / DSTV subscriptions
 
 ## Exposure
-HTTP controllers under the service project. Scheduler repos expose hosted jobs instead of HTTP.
+ASP.NET Core controllers (`MapControllers`). No minimal APIs. See `overview/request-pipeline.md`.
+
+**Packages (selected):** MassTransit.RabbitMQ, Microsoft.EntityFrameworkCore, Microsoft.EntityFrameworkCore.Tools, Npgsql.EntityFrameworkCore.PostgreSQL, Serilog.AspNetCore, Serilog.Filters.Expressions, Serilog.Formatting.Compact, StackExchange.Redis, Swashbuckle.AspNetCore
 
 ## APIs
 | ID | Method + path | Controller.Action | Purpose | Auth | Conf. |
 |---|---|---|---|---|---|
-| BE-API-DSTV-001 | POST /api/DSTV | DSTVController.GetCustomerDetail | — | none | confirmed |
-| BE-API-DSTV-002 | POST /api/DSTV | DSTVController.GetDueAmount | — | none | confirmed |
-| BE-API-DSTV-003 | POST /api/DSTV | DSTVController.GetAvailableProducts | — | none | confirmed |
-| BE-API-DSTV-004 | POST /api/DSTV | DSTVController.SubmitPaymentBySmartcard | — | none | confirmed |
-| BE-API-DSTV-005 | POST /api/DSTV | DSTVController.PaymentConfirmation | — | none | confirmed |
-| BE-API-DSTV-006 | POST /api/DSTV/CustomerDetailenc | DSTVController.CustomerDetailenc | — | none | confirmed |
-| BE-API-DSTV-007 | POST /api/DSTV/DueAmountenc | DSTVController.DueAmountenc | — | none | confirmed |
-
+| BE-API-DSTV-001 | `POST /api/DSTV/GetCustomerDetail` | `DSTVController.GetCustomerDetail` | DSTVController.GetCustomerDetail | see contract | confirmed |
+| BE-API-DSTV-002 | `POST /api/DSTV/GetDueAmount` | `DSTVController.GetDueAmount` | DSTVController.GetDueAmount | see contract | confirmed |
+| BE-API-DSTV-003 | `POST /api/DSTV/GetAvailableProducts` | `DSTVController.GetAvailableProducts` | DSTVController.GetAvailableProducts | see contract | confirmed |
+| BE-API-DSTV-004 | `POST /api/DSTV/SubmitPaymentBySmartcard` | `DSTVController.SubmitPaymentBySmartcard` | DSTVController.SubmitPaymentBySmartcard | see contract | confirmed |
+| BE-API-DSTV-005 | `POST /api/DSTV/PaymentConfirmation` | `DSTVController.PaymentConfirmation` | DSTVController.PaymentConfirmation | see contract | confirmed |
+| BE-API-DSTV-006 | `POST /api/DSTV/CustomerDetailenc` | `DSTVController.CustomerDetailenc` | DSTVController.CustomerDetailenc | see contract | confirmed |
+| BE-API-DSTV-007 | `POST /api/DSTV/DueAmountenc` | `DSTVController.DueAmountenc` | DSTVController.DueAmountenc | see contract | confirmed |
 
 ## Dependencies
 | Calls | Sync/Async | Why |
 |---|---|---|
-| Session / Account / Config (typical) | Sync HTTP | Token and profile checks |
+| CONFIG `CMM` / `ConfigAPIUrl` | Sync | response-code mapping, catalogues |
+
 | Called by | Sync/Async | Why |
-| Mobile app / portal | Sync | User journeys |
+|---|---|---|
+| Mobile app (direct or via external gateway) | Sync | product APIs |
+| WebPortal | Sync | admin screens (IDENT/CONFIG mainly) |
 
 ## Data owned
 | Entity / table | Purpose |
 |---|---|
-| See data-model.md | — |
+| `Token` / `—` | `TZTigoSuperAppDigitalSubscription/Domain/Model/Token.cs` |
+| `DSTVPackagesRepository` / `—` | `TZTigoSuperAppDigitalSubscription/Domain/Repositories/DSTVPackagesRepository.cs` |
 
 ## Events · Jobs · Integrations (links)
 - [events.md](events.md) · [jobs.md](jobs.md) · [integrations.md](integrations.md)
 
 ## Config keys that change behaviour (names only)
-`TokenKey`, `isEncrypted`/`is_encrypted`, `Encryption_Decryption_Key`, `IV`, `JwtExpiryMins`, `PostgresConnection` (name only)
+`BusinessUnit`, `ConfigAPIUrl`, `CustomerNumber`, `Datasource`, `EnableLog:Debug`, `EnableLog:Error`, `EnableLog:Information`, `EnableLog:Warning`, `Encryption_Decryption_Key`, `IV`, `IsRedisCluster`, `RabbitMQ:<redacted-purpose>`, `RabbitMQ:LogQueueName`, `RabbitMQ:LogURL`, `RabbitMQ:Username`, `RedisPassword (key name)<redacted-purpose>`, `RedisURL`, `SaveLogs`, `SendAuditLogsViaService`, `Tigo2DSTVGetAvailableProducts`, `Tigo2DSTVGetCustomerDetailsByDeviceNumber`, `Tigo2DSTVGetDueAmountandDate`, `Tigo2DSTVPaymentConfirmation`, `Tigo2DSTVSubmitPaymentBySmartcard`, `TokenKey`, `VendorCode`, `apiResponseChanel`, `is_encrypted`, `serviceName`
 
 ## Open questions
-Status this run: **deep-analyzed**
+- Gateway public URLs not in-repo.

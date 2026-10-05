@@ -4,41 +4,55 @@ type: service
 ids: [BE-SVC-MCHRPT]
 service: MCHRPT
 repo: TZ-Tigo-SuperApp-MChangoReportScheduler
-repo_ref: cursor/superapp-backend-documentation-6fa7
+repo_ref: cursor/superapp-backend-documentation-cf53
 repo_sha: 34ba77f
 updated: 2026-10-05
 confidence: confirmed
 ---
-# BE-SVC-MCHRPT TZ-Tigo-SuperApp-MChangoReportScheduler
-**Repo:** `TZ-Tigo-SuperApp-MChangoReportScheduler` · **Type:** batch/scheduler · **Stack:** ASP.NET Core net8.0 (PORTAL: Angular) · **Ref/SHA:** `34ba77f`
-**Purpose:** MChango report jobs
+
+# BE-SVC-MCHRPT MChango reports and interest
+**Repo:** `TZ-Tigo-SuperApp-MChangoReportScheduler` · **Type:** batch/scheduler · **Stack:** net8.0 · **Ref/SHA:** `cursor/superapp-backend-documentation-cf53` / `34ba77f`
+**Purpose:** MChango reports and interest
 
 ## Exposure
-HTTP controllers under the service project. Scheduler repos expose hosted jobs instead of HTTP.
+ASP.NET Core controllers (`MapControllers`). No minimal APIs. See `overview/request-pipeline.md`.
+
+**Packages (selected):** FluentValidation, FluentValidation.AspNetCore, Microsoft.AspNetCore.Authentication.JwtBearer, Microsoft.AspNetCore.Identity.EntityFrameworkCore, Microsoft.EntityFrameworkCore, Microsoft.EntityFrameworkCore.Tools, Npgsql.EntityFrameworkCore.PostgreSQL, RabbitMQ.Client, Serilog.AspNetCore, Serilog.Filters.Expressions, Serilog.Formatting.Compact, StackExchange.Redis, Swashbuckle.AspNetCore
 
 ## APIs
 | ID | Method + path | Controller.Action | Purpose | Auth | Conf. |
 |---|---|---|---|---|---|
-| — | — | — | no HTTP controllers | — | — |
-
 
 ## Dependencies
 | Calls | Sync/Async | Why |
 |---|---|---|
-| Session / Account / Config (typical) | Sync HTTP | Token and profile checks |
+| CONFIG `CMM` / `ConfigAPIUrl` | Sync | response-code mapping, catalogues |
+
 | Called by | Sync/Async | Why |
-| Mobile app / portal | Sync | User journeys |
+|---|---|---|
+| Mobile app (direct or via external gateway) | Sync | product APIs |
+| WebPortal | Sync | admin screens (IDENT/CONFIG mainly) |
 
 ## Data owned
 | Entity / table | Purpose |
 |---|---|
-| See data-model.md | — |
+| `T` / `_entities` | EF set |
+| `T` / `Entities` | EF set |
+| `T` / `Table` | EF set |
+| `T` / `Table` | EF set |
+| `mchangointerestconfiguration` / `mchangointerestconfiguration` | EF set |
+| `AccountEntityModel` / `Accounts` | EF set |
+| `PledgeTransactionEntityModel` / `PledgeTransactions` | EF set |
+| `InvitationEntityModel` / `Invitations` | EF set |
+| `AccountDurationTypeEntityModel` / `AccountDurationTypes` | EF set |
+| `TransactionHistoryEntityModel` / `TransactionHistory` | EF set |
+| `MChangoReportRequestsEntityModel` / `MChangoReportRequests` | EF set |
 
 ## Events · Jobs · Integrations (links)
 - [events.md](events.md) · [jobs.md](jobs.md) · [integrations.md](integrations.md)
 
 ## Config keys that change behaviour (names only)
-`TokenKey`, `isEncrypted`/`is_encrypted`, `Encryption_Decryption_Key`, `IV`, `JwtExpiryMins`, `PostgresConnection` (name only)
+`ConfigAPIUrl`, `EmailCC`, `EmailTo`, `EnableLog:Debug`, `EnableLog:Error`, `EnableLog:Information`, `EnableLog:Warning`, `Encryption_Decryption_Key`, `GetBalance`, `IV`, `IsRedisCluster`, `MChangoImage`, `MIXXBanner`, `MIXXLogo`, `MaxRecords`, `Partner:ApiBaseUrl`, `Partner:XAuthKey`, `RabbitMQ:<redacted-purpose>`, `RabbitMQ:IsHttpsRabbitMQ`, `RabbitMQ:Port`, `RabbitMQ:URL`, `RabbitMQ:Username`, `RedisPassword (key name)<redacted-purpose>`, `RedisURL`, `ServiceDelayTimeMin`, `SmtpPassword (key name)<redacted-purpose>`, `SmtpPort`, `SmtpServer`, `SmtpUsername`, `Tanzania:<redacted-purpose>`, `Tanzania:ChannelUser`, `Tanzania:SendMoneyFeeCheck:ConsumerID:APP`, `responseChanel`, `serviceName`
 
 ## Open questions
-Status this run: **inventoried**
+- Gateway public URLs not in-repo.

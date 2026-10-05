@@ -4,12 +4,21 @@ type: service
 ids: [BE-SVC-EXPENSE]
 service: EXPENSE
 repo: TZ-Tigo-SuperApp-Expense
-repo_ref: cursor/superapp-backend-documentation-6fa7
+repo_ref: cursor/superapp-backend-documentation-cf53
 repo_sha: e821ac9
 updated: 2026-10-05
-confidence: confirmed
+confidence: partial
 ---
-# BE-SVC-EXPENSE data model
 
-See EF DbContext in the service project. IDENT: `ApplicationUser` (Identity) + roles/claims. SESS: `Tokens` (msisdn, deviceid, access/refresh, expiries).
+# Data model — EXPENSE
 
+| Entity | Table | Source |
+|---|---|---|
+| `TZExpenseEFContext` | `—` | `TZTigoSuperAppExpense/Domain/DBContext/TZExpenseEFContext.cs` |
+| `AccountEFContext` | `—` | `TZTigoSuperAppExpense/Domain/DBContext/AccountEFContext.cs` |
+| `Tokens` | `—` | `TZTigoSuperAppExpense/Domain/Entity/Tokens.cs` |
+| `retirement` | `—` | `TZTigoSuperAppExpense/Domain/Entity/retirement.cs` |
+| `expense` | `—` | `TZTigoSuperAppExpense/Domain/Entity/expense.cs` |
+| `BaseEntity` | `—` | `TZTigoSuperAppExpense/Domain/Entity/BaseEntity.cs` |
+| `BaseDeleteAttribute` | `—` | `TZTigoSuperAppExpense/Domain/Entity/BaseEntity.cs` |
+| `ExpenseManagementRepository` | `—` | `TZTigoSuperAppExpense/Domain/Repositories/ExpenseManagementRepository.cs` |

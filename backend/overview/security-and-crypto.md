@@ -1,30 +1,34 @@
 ---
 kb_section: backend
 type: overview
-ids: [BE-OVR-SEC]
+ids: [BE-OV-SEC]
 service: ALL
 repo: multi
-repo_ref: cursor/superapp-backend-documentation-6fa7
+repo_ref: checked-out
 repo_sha: multi
 updated: 2026-10-05
 confidence: confirmed
 ---
+
 # Security and crypto (mechanism only)
 
-## Envelope
-Mobile APIs accept `{ "payload": "<string>" }`. When config `isEncrypted` is `"true"`, `RequestSecurity.Receive<T>` decrypts the string to DTO `T` and stores it in `HttpContext.Items["modeldata"]`. Responses are wrapped with `RequestSecurity.Send`.
+## Transport envelope
+Most feature APIs wrap the JSON DTO in `payload`. When config `is_encrypted` (or `isEncrypted` in Wallet/GSM/Reward) is `"true"`:
+- Decrypt: `RequestSecurity.Receive<T>` / `Encryption.Receive` — **AES CBC** via `Aes.Create()` + `CryptoStream`.
+- Encrypt: whole **response object** JSON, not field-level.
+- Filter class: `EncryptionProviderFilter<TEntity>` (typo `EncriptionProviderFilter` in Wallet/GSM/Reward).
+- Binding: decrypted instance stored in `HttpContext.Items["modeldata"]`; action parameter remains `RequestModel`.
 
-## Algorithm family
-`System.Security.Cryptography.Aes` (CBC via `Aes.Create()` encryptor/decryptor), UTF-8 JSON, Base64 ciphertext. Key material from config keys `Encryption_Decryption_Key` and `IV` (values never recorded).
+MChango: `EncryptionMiddleware` replaces request/response streams (section `EncryptionSecret`, flag `EnableEncryption`). USSD has a separate key/IV pair (names only).
 
-## Session JWT
-HMAC-SHA256 JWT (`TokenKey`). Claims: `ClaimTypes.Name` = msisdn, `ClaimTypes.SerialNumber` = deviceid. Cache key shape: `device_session_{msisdn}_{deviceid}`. Expiry from `JwtExpiryMins` / `JwtRefreshExpiryMins` (seconds despite the name).
+Identity portal APIs are **not** payload-encrypted; they use JWT Bearer.
 
-## IDENT
-ASP.NET Identity lockout: `LockoutTimeSpan`, `MaxRetries`. LDAP bind for `loginwithad`. OTP emailed/SMS via `IOtpService`.
+## Session
+- Issued by SESS `POST /api/Account/auth` (`TokenDto`: msisdn, deviceid) — HMAC-SHA256 JWT claims Name=msisdn, SerialNumber=deviceid. Cache key shape `device_session_{msisdn}_{deviceid}`.
+- Validated **locally** in each service (`SessionValidationFilter`): parse JWT with `TokenKey`, then Redis then Account `tokens` table. **Does not HTTP-call SESS** on each request.
+- ACCOUNT `SessionManagement.EstablishSession` is the only `SMM` client (`Session:Configuration` + `api/Account/auth`).
 
-## Authz
-IDENT `AuthorizationFilter`: skip list Login/LogOut/passwordchange/LoginWithOTP/ResendOtp/LoginWithAD; else Admin role or claim equal to `Controller:Action`.
+## Config key names (no values)
+`is_encrypted`, `isEncrypted`, `Encryption_Decryption_Key`, `IV`, `Encryption_Decryption_Key_V2`, encryption-secret section names, `TokenKey`, `JwtExpiryMins`, `JwtRefreshExpiryMins`, `Origins`, `RedisURL`.
 
-## Session filter failure
-WALLET-style `SessionValidationFilter` returns HTTP 410 Gone with `responseCode` = Gone and messages `No Token provided` / `Token Expired` / `Error in session validation`.
+Identity: `AddJwtBearer`, token from `X-User-Session`; `AuthorizationFilter` enforces `Controller:Action` claims (admin bypass).

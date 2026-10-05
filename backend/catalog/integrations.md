@@ -4,9 +4,12 @@ type: catalog
 ids: [BE-CAT-INT]
 service: ALL
 repo: multi
-repo_ref: cursor/superapp-backend-documentation-6fa7
+repo_ref: checked-out
 repo_sha: multi
 updated: 2026-10-05
-confidence: confirmed
+confidence: partial
 ---
-# Integrations catalog
+
+# Integrations
+
+Named HttpClients: `CMM`→CONFIG, `SMM`→SESS (Account), `IdentityApi`→IDENT (CONFIG). External MMP/Tigopesa/NIDA/biller URLs are config-driven; hosts omitted. See each `services/*/integrations.md`.

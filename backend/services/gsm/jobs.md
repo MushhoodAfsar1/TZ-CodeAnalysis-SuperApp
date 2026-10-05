@@ -4,12 +4,14 @@ type: service
 ids: [BE-SVC-GSM]
 service: GSM
 repo: TZ-Tigo-SuperApp-GSM
-repo_ref: cursor/superapp-backend-documentation-6fa7
+repo_ref: cursor/superapp-backend-documentation-cf53
 repo_sha: 13fe724
 updated: 2026-10-05
-confidence: confirmed
+confidence: partial
 ---
-# BE-SVC-GSM jobs
 
-No hosted jobs in this service.
+# Jobs — GSM
 
+| ID | Kind | Class | File | Notes |
+|---|---|---|---|---|
+| — | none parsed | — | — | — |

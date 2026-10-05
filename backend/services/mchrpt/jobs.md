@@ -1,21 +1,29 @@
 ---
 kb_section: backend
 type: service
-ids: [BE-JOB-MCHRPT-001, BE-JOB-MCHRPT-002]
+ids: [BE-SVC-MCHRPT]
 service: MCHRPT
 repo: TZ-Tigo-SuperApp-MChangoReportScheduler
-repo_ref: cursor/superapp-backend-documentation-6fa7
+repo_ref: cursor/superapp-backend-documentation-cf53
 repo_sha: 34ba77f
 updated: 2026-10-05
-confidence: confirmed
+confidence: partial
 ---
-# BE-SVC-MCHRPT jobs
 
-| ID | Trigger | What it does | Data / downstream | Conf. |
+# Jobs — MCHRPT
+
+| ID | Kind | Class | File | Notes |
 |---|---|---|---|---|
-| BE-JOB-MCHRPT-001 | `Worker` BackgroundService loop | `IReportSendingService.SendReportToRecipient(MaxRecords)` | report recipients | confirmed |
-| BE-JOB-MCHRPT-002 | `InterestCalculationService` hosted | Interest calculation for MChango | MChango data | partial |
+| BE-JOB-MCHRPT-001 | BackgroundService | `Worker` | `TZTigoSuperAppMChangoReportScheduler/Worker.cs` |  |
+| BE-JOB-MCHRPT-002 | BackgroundService | `ReportSendingService` | `TZTigoSuperAppMChangoReportScheduler/Services/BackgroundService/ReportSendingService.cs` |  |
+| BE-JOB-MCHRPT-003 | IHostedService | `InterestCalculationService` | `TZTigoSuperAppMChangoReportScheduler/Services/BackgroundService/InterestCalculationService.cs` |  |
+| BE-JOB-MCHRPT-004 | *(not a job)* | `ApplicationServiceExtensions` | `.../Common/Extensions/ApplicationServiceExtensions.cs` | DI registrar; counted because file text contains `BackgroundService`. |
 
-Delay: `ServiceDelayTimeMin` minutes between loops (`60000 * ServiceDelayTimeMin`). Batch size: `MaxRecords`.
+## BE-JOB-MCHRPT-001 / 002 Report sending
+**Trigger:** `Worker` hosted loop calling `IReportSendingService` / `ReportSendingService`.
+**Purpose:** send MChango reports (email/outbox — see class).
+**Evidence:** `TZ-Tigo-SuperApp-MChangoReportScheduler/TZTigoSuperAppMChangoReportScheduler/Worker.cs`.
 
-Evidence: `TZTigoSuperAppMChangoReportScheduler/Worker.cs › ExecuteAsync`
+## BE-JOB-MCHRPT-003 InterestCalculationService
+**Trigger:** `IHostedService` (runs interest calculation; MChango copies of this hosted service are commented out).
+**Evidence:** `.../Services/BackgroundService/InterestCalculationService.cs` @ `34ba77f`.

@@ -1,43 +1,52 @@
 ---
 kb_section: backend
 type: overview
-ids: [BE-OVR-PIPE]
+ids: [BE-OV-PIPE]
 service: ALL
 repo: multi
-repo_ref: cursor/superapp-backend-documentation-6fa7
+repo_ref: checked-out
 repo_sha: multi
 updated: 2026-10-05
 confidence: confirmed
 ---
+
 # Request pipeline
 
-Typical **mobile feature** request (WALLET, SEND, ACCOUNT, …):
+There is **no API-gateway repo** in this workspace. The mobile client calls each service’s Kestrel endpoints (hosts not recorded). Typical money-path service:
 
 ```mermaid
 sequenceDiagram
-  participant App
+  participant App as Mobile app
   participant Enc as EncryptionProviderFilter
   participant Sess as SessionValidationFilter
   participant Ctrl as Controller
-  participant Svc as Service
-  App->>Enc: POST JSON { payload: "<base64 AES>" }
-  Enc->>Enc: AES decrypt if isEncrypted=true
-  Enc->>Sess: HttpContext.Items["modeldata"]
-  Note over App,Sess: Header X-User-Session
-  Sess->>Sess: JWT claims msisdn + deviceid
-  Sess->>Sess: Redis device_session_{msisdn}_{deviceid}
-  alt cache miss or token mismatch
-    Sess->>Sess: tokens table fallback
-  end
+  participant Svc as Service / repository
+  participant Cfg as CONFIG CMM
+  App->>Enc: POST {payload: AES-or-JSON}
+  Enc->>Enc: Decrypt payload to TEntity
+  Enc->>Sess: Items.modeldata
+  Sess->>Sess: JWT X-User-Session + Redis/DB
   Sess->>Ctrl: action
-  Ctrl->>Svc: decrypted DTO
-  Svc-->>Ctrl: result object
-  Ctrl-->>Enc: ObjectResult
-  Enc-->>App: AES ciphertext if isEncrypted=true
+  Ctrl->>Svc: handler
+  Svc->>Cfg: response-code lookup
+  Ctrl->>Enc: BaseResponse envelope
+  Enc->>App: AES-encrypted whole response (if enabled)
 ```
 
-**IDENT (portal):** `[Authorize(JwtBearer)]` + `AuthorizationFilter` (claim `Controller:Action` or role Admin). Login/OTP/AD/logout/passwordchange are AllowAnonymous bypasses in the filter. Token is read from header `X-User-Session` in JwtBearer `OnMessageReceived`.
+## Envelope
+- Request: `{ "payload": "<string>" }` (`RequestModel.payload`) except Identity portal JWTs, Session `auth`, MChango middleware-bound DTOs, and helper `enc`/`dec` endpoints.
+- Success (after `ApiResponseHandler`): `success`, `responseCode`, `transactionStatus`, `appVersionInfo`, `responseData`.
+- Failure: `success`, `responseCode`, `appVersionInfo`, `errorDescription`.
+- HTTP: 200 if `responseCode=="200"` else 201 on success; 400 or 500 on failure.
 
-**SESS:** `POST /api/Account/auth` issues access+refresh JWT; `POST /api/Account/refreshToken` uses encryption filter + validates stored refresh token. HTTP **411** is used as invalid-token status on refresh.
+## Middleware variants
+| Pattern | Services | Order |
+|---|---|---|
+| A | Most feature services | Swagger → Https → UseAuthorization → MapControllers |
+| B | Wallet, Reward, Notification, AuditLogs | Swagger → GlobalError → Cors → Https → UseAuthorization → MapControllers |
+| C | GSM | Cors → Https → UseAuthorization → GlobalError → MapControllers |
+| D | Identity, Session | Cors → (Https) → UseAuthentication → UseAuthorization → MapControllers |
+| E | MChango | EncryptionMiddleware → Cors → UseAuthentication → UseAuthorization → MapControllers |
+| F | CONFIG | GlobalError → Https → Cors → UseAuthorization (JWT registered; UseAuthentication missing) |
 
-Config flags (names only): `isEncrypted` (most services) vs `is_encrypted` (IDENT filter).
+No `Startup.cs`. Auth on money-path APIs is **filter-based**, not `UseAuthentication`.

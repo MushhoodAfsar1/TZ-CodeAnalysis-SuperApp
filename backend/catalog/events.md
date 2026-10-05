@@ -4,9 +4,12 @@ type: catalog
 ids: [BE-CAT-EVT]
 service: ALL
 repo: multi
-repo_ref: cursor/superapp-backend-documentation-6fa7
+repo_ref: checked-out
 repo_sha: multi
 updated: 2026-10-05
-confidence: confirmed
+confidence: partial
 ---
-# Events catalog
+
+# Events
+
+No MassTransit bus registration found except Notification `FCMNotificationConsumer` source (bus not wired in Program.cs). RabbitMQ helpers publish audit/FCM payloads in several services.

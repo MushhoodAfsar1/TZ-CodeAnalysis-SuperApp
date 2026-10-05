@@ -4,48 +4,56 @@ type: service
 ids: [BE-SVC-SAVING]
 service: SAVING
 repo: TZ-Tigo-SuperApp-Saving
-repo_ref: cursor/superapp-backend-documentation-6fa7
+repo_ref: cursor/superapp-backend-documentation-cf53
 repo_sha: 2ca8791
 updated: 2026-10-05
 confidence: confirmed
 ---
-# BE-SVC-SAVING TZ-Tigo-SuperApp-Saving
-**Repo:** `TZ-Tigo-SuperApp-Saving` · **Type:** service · **Stack:** ASP.NET Core net8.0 (PORTAL: Angular) · **Ref/SHA:** `2ca8791`
-**Purpose:** Savings
+
+# BE-SVC-SAVING Personal savings / Kibubu+
+**Repo:** `TZ-Tigo-SuperApp-Saving` · **Type:** service · **Stack:** net8.0 · **Ref/SHA:** `cursor/superapp-backend-documentation-cf53` / `2ca8791`
+**Purpose:** Personal savings / Kibubu+
 
 ## Exposure
-HTTP controllers under the service project. Scheduler repos expose hosted jobs instead of HTTP.
+ASP.NET Core controllers (`MapControllers`). No minimal APIs. See `overview/request-pipeline.md`.
+
+**Packages (selected):** Microsoft.EntityFrameworkCore, Microsoft.EntityFrameworkCore.Tools, Npgsql.EntityFrameworkCore.PostgreSQL, RabbitMQ.Client, Serilog.AspNetCore, Serilog.Filters.Expressions, Serilog.Formatting.Compact, StackExchange.Redis, Swashbuckle.AspNetCore
 
 ## APIs
 | ID | Method + path | Controller.Action | Purpose | Auth | Conf. |
 |---|---|---|---|---|---|
-| BE-API-SAVING-001 | POST /api/Saving | SavingController.SubscriptionStatus | — | none | confirmed |
-| BE-API-SAVING-002 | POST /api/Saving/enc | SavingController.enc | — | none | confirmed |
-| BE-API-SAVING-003 | POST /api/KibubuPlus | KibubuPlusController.GetEligiblePlans | — | none | confirmed |
-| BE-API-SAVING-004 | POST /api/KibubuPlus | KibubuPlusController.ActivatePlan | — | none | confirmed |
-| BE-API-SAVING-005 | POST /api/KibubuPlus | KibubuPlusController.CheckBalance | — | none | confirmed |
-| BE-API-SAVING-006 | POST /api/KibubuPlus | KibubuPlusController.ManualContribution | — | none | confirmed |
-| BE-API-SAVING-007 | POST /api/KibubuPlus | KibubuPlusController.Withdraw | — | none | confirmed |
-| BE-API-SAVING-008 | POST /api/KibubuPlus | KibubuPlusController.SavingHistory | — | none | confirmed |
-
+| BE-API-SAVING-001 | `POST /api/Saving/SubscriptionStatus` | `SavingController.SubscriptionStatus` | SavingController.SubscriptionStatus | see contract | confirmed |
+| BE-API-SAVING-002 | `POST /api/Saving/enc` | `SavingController.enc` | SavingController.enc | see contract | confirmed |
+| BE-API-SAVING-003 | `POST /api/KibubuPlus/GetEligiblePlans` | `KibubuPlusController.GetEligiblePlans` | KibubuPlusController.GetEligiblePlans | see contract | confirmed |
+| BE-API-SAVING-004 | `POST /api/KibubuPlus/ActivatePlan` | `KibubuPlusController.ActivatePlan` | KibubuPlusController.ActivatePlan | see contract | confirmed |
+| BE-API-SAVING-005 | `POST /api/KibubuPlus/CheckBalance` | `KibubuPlusController.CheckBalance` | KibubuPlusController.CheckBalance | see contract | confirmed |
+| BE-API-SAVING-006 | `POST /api/KibubuPlus/ManualContribution` | `KibubuPlusController.ManualContribution` | KibubuPlusController.ManualContribution | see contract | confirmed |
+| BE-API-SAVING-007 | `POST /api/KibubuPlus/Withdraw` | `KibubuPlusController.Withdraw` | KibubuPlusController.Withdraw | see contract | confirmed |
+| BE-API-SAVING-008 | `POST /api/KibubuPlus/SavingHistory` | `KibubuPlusController.SavingHistory` | KibubuPlusController.SavingHistory | see contract | confirmed |
 
 ## Dependencies
 | Calls | Sync/Async | Why |
 |---|---|---|
-| Session / Account / Config (typical) | Sync HTTP | Token and profile checks |
+| CONFIG `CMM` / `ConfigAPIUrl` | Sync | response-code mapping, catalogues |
+
 | Called by | Sync/Async | Why |
-| Mobile app / portal | Sync | User journeys |
+|---|---|---|
+| Mobile app (direct or via external gateway) | Sync | product APIs |
+| WebPortal | Sync | admin screens (IDENT/CONFIG mainly) |
 
 ## Data owned
 | Entity / table | Purpose |
 |---|---|
-| See data-model.md | — |
+| `SavingTransactions` / `SavingTransactions` | `TZTigoSuperAppSaving/Data/Entities/SavingTransactions.cs` |
+| `BaseEntity` / `—` | `TZTigoSuperAppSaving/Data/Entities/BaseEntity.cs` |
+| `SubscriptionRepository` / `—` | `TZTigoSuperAppSaving/Domain/Repositories/SubscriptionRepository.cs` |
+| `KibubuPlusRepository` / `—` | `TZTigoSuperAppSaving/Domain/Repositories/KibubuPlusRepository.cs` |
 
 ## Events · Jobs · Integrations (links)
 - [events.md](events.md) · [jobs.md](jobs.md) · [integrations.md](integrations.md)
 
 ## Config keys that change behaviour (names only)
-`TokenKey`, `isEncrypted`/`is_encrypted`, `Encryption_Decryption_Key`, `IV`, `JwtExpiryMins`, `PostgresConnection` (name only)
+`ConfigAPIUrl`, `EnableLog:Debug`, `EnableLog:Error`, `EnableLog:Information`, `EnableLog:Warning`, `Encryption_Decryption_Key`, `FCMNotify`, `IV`, `IsRedisCluster`, `KibubuPlus:ActivatePlanUrl`, `KibubuPlus:BasicToken`, `KibubuPlus:CheckBalanceUrl`, `KibubuPlus:GetEligiblePlansUrl`, `KibubuPlus:ManualContributionUrl`, `KibubuPlus:SavingHistoryUrl`, `KibubuPlus:TokenUrl`, `KibubuPlus:WithdrawUrl`, `MFSUserDetails`, `RabbitMQ:<redacted-purpose>`, `RabbitMQ:LogQueueName`, `RabbitMQ:LogURL`, `RabbitMQ:QueueName`, `RabbitMQ:Username`, `RedisPassword (key name)<redacted-purpose>`, `RedisURL`, `SaveLogs`, `SendAuditLogsViaService`, `SendFCMViaService`, `SubscriptionStatusUrl`, `Tanzania:<redacted-purpose>`, `Tanzania:Account:UserName`, `Tanzania:ConsumerID`, `Tanzania:Subscription`, `Tanzania:Withdraw`, `Tanzania:responseChanel`, `Tanzania:serviceName`, `Tanzania:sourceMSISDN`, `Tanzania:sourcePIN`, `TokenKey`, `is_encrypted`
 
 ## Open questions
-Status this run: **deep-analyzed**
+- Gateway public URLs not in-repo.

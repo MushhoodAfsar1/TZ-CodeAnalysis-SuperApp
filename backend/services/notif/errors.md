@@ -4,14 +4,17 @@ type: service
 ids: [BE-SVC-NOTIF]
 service: NOTIF
 repo: TZ-Tigo-SuperApp-Notification
-repo_ref: cursor/superapp-backend-documentation-6fa7
+repo_ref: cursor/superapp-backend-documentation-cf53
 repo_sha: b7c98ec
 updated: 2026-10-05
-confidence: confirmed
+confidence: partial
 ---
-# BE-SVC-NOTIF errors
+
+# Errors — NOTIF
+
+See also `overview/error-model.md`.
 
 | ID | BE code | HTTP | Meaning | Raised in | APIs | Retryable |
 |---|---|---|---|---|---|---|
-| See API files | | | | | | |
-
+| BE-ERR-NOTIF-001 | 500 | 500 | Unhandled exception | controller catch | all | depends |
+| BE-ERR-NOTIF-002 | session | 410 | Invalid session | SessionValidationFilter | session-gated | no |

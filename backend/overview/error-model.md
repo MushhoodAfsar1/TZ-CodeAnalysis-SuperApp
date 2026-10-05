@@ -1,23 +1,31 @@
 ---
 kb_section: backend
 type: overview
-ids: [BE-OVR-ERR]
+ids: [BE-OV-ERR]
 service: ALL
 repo: multi
-repo_ref: cursor/superapp-backend-documentation-6fa7
+repo_ref: checked-out
 repo_sha: multi
 updated: 2026-10-05
 confidence: confirmed
 ---
+
 # Error model
 
-There is **no single shared error library**. Patterns:
+## Handler envelope (`BaseResponse<T>`)
+`success`, `responseCode`, `responseMessage_en`, `responseMessage_fr`, `transactionStatus`, `errorDescription`, `appVersionInfo`, `responseData`.
 
-| Surface | Shape | Notes |
+## HTTP mapping (`ApiResponseHandler.CreateResponse`)
+Looks up CONFIG `GET api/ResponseCodeApp/get-response-code-details/{code}/{lang}/{channel}[/{service}/{method}]`.
+- success true → HTTP 200 if code `"200"` else 201; body omits errorDescription.
+- success false → HTTP 500 if code `"500"` else 400; body uses `errorDescription`.
+
+## Filters
+| Source | HTTP | Body |
 |---|---|---|
-| IDENT | `BaseDto<T>` `{ success, responseCode, responseMessage_en, responseMessage_fr, Data }` | Also raw `BadRequest(string)` / 500 string |
-| SESS refresh | anonymous object `{ success, responseCode, errordescription, responseData }` | Invalid token → HTTP 411 |
-| Mobile features | `{ success, responseCode, errordescription, responseData }` or service-specific | Session filter uses HTTP 410 |
-| Encryption on 401 | IDENT filter maps 401 → 411 when encrypting | `EncryptionProviderFilter` |
+| SessionValidationFilter | 410 | `success`, `responseCode`, `errordescription`, `responseData` |
+| DeviceFilter (ACCOUNT) | 423 | `errorDescription` |
+| Action catch | 500 | `success=false`, `responseCode=500`, `errorDescription=Internal Server Error` |
+| GlobalErrorHandlingMiddleware | swallows / logs | not a standard ProblemDetails envelope |
 
-Treat Swagger comments as inferred. Codes like `RG-UP-01` appear in SESS refresh failure.
+No `ProblemDetails` usage found.
