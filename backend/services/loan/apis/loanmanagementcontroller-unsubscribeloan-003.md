@@ -90,11 +90,8 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | Decrypt `payload` with AES when config `is_encrypted`/`isEncrypted` is true; else JSON-deserialize | Filter stores raw string; later cast may fail → 500 | — | `TZ-Tigo-SuperApp-Loan/TZTigoSuperAppLoan/Controllers/LoanManagementController.cs › LoanManagementController.UnsubscribeLoan` |
-| 2 | Validate `X-User-Session` JWT (`TokenKey`) then Redis/DB token | HTTP 410 envelope | BE-BR-LOAN-001 | `TZ-Tigo-SuperApp-Loan › SessionValidationFilter` |
-| 3 | `response.responseCode == "0"` | branch / error envelope | — | `TZ-Tigo-SuperApp-Loan/TZTigoSuperAppLoan/Controllers/LoanManagementController.cs › LoanManagementController.UnsubscribeLoan` |
-| 4 | `_configuration.GetValue<string>("EnableLog:Error"` | branch / error envelope | — | `TZ-Tigo-SuperApp-Loan/TZTigoSuperAppLoan/Controllers/LoanManagementController.cs › LoanManagementController.UnsubscribeLoan` |
-| 5 | `param is string` | branch / error envelope | — | `TZ-Tigo-SuperApp-Loan/TZTigoSuperAppLoan/Controllers/LoanManagementController.cs › LoanManagementController.UnsubscribeLoan` |
+| 1 | Decrypt + session | 500 / 410 | BE-BR-LOAN-001 | `LoanManagementController.UnsubscribeLoan` |
+| 2 | SOAP MTPGOverDraftUnSubscribeReq; success responseCode==0 | fail envelope | — | `TZ-Tigo-SuperApp-Loan › LoanManagementRepository.UnsubscribeLoan` |
 
 ## Internal call chain
 1. Client POST `/api/LoanManagement/UnsubscribeLoan` with `{ payload }` envelope.
@@ -120,9 +117,9 @@ sequenceDiagram
 ```
 
 ## Downstream
-| Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
+| Order | Target | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| 1 | BE-API-CONFIG (ResponseCodeApp get-response-code-details) | Sync | after handler | responseCode, language, channel, optional service/method |
+| 1 | MMP XML overdraft | Sync | always | customerMsisdn, pin, brandID/amount |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
@@ -165,9 +162,7 @@ Sample (synthetic):
 - Session validity: `BE-BR-LOAN-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `Tanzania:UnsubscribeLoan`, `Tanzania:ConsumerID`, `TokenKey`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-Loan/TZTigoSuperAppLoan/Controllers/LoanManagementController.cs › LoanManagementController.UnsubscribeLoan` @ `759a471`
