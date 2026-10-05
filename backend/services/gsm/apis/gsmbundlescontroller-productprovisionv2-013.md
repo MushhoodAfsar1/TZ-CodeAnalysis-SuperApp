@@ -1,0 +1,189 @@
+---
+kb_section: backend
+type: api-contract
+ids: [BE-API-GSM-013]
+service: GSM
+repo: TZ-Tigo-SuperApp-GSM
+repo_ref: cursor/superapp-backend-documentation-cf53
+repo_sha: 13fe724
+updated: 2026-10-05
+confidence: confirmed
+---
+
+# BE-API-GSM-013 GSMBundlesController.ProductProvisionV2
+**Service:** BE-SVC-GSM · **Handler:** `TZ-Tigo-SuperApp-GSM/TZTigoSuperAppGSM/Controllers/GSMBundlesController.cs › GSMBundlesController.ProductProvisionV2` · **Conf.:** confirmed
+
+## Match keys
+```yaml
+match_keys:
+  public_method: POST
+  public_path: /api/GSMBundles/ProductProvisionV2
+  internal_path: /api/GSMBundles/ProductProvisionV2
+  dispatch_field: null
+  dispatch_value: null
+  controller_action: GSMBundlesController.ProductProvisionV2
+  topic: null
+```
+
+## Exposure & security
+- **Method / path:** `POST /api/GSMBundles/ProductProvisionV2`
+- **Auth / filters:** EncryptionProviderFilter<ProductProvisionRequest>
+- **Headers:** `X-User-Session` (Bearer JWT) when session filter present; `Content-Type: application/json`.
+- **Encryption:** whole-body AES on `payload` / response when enabled (`is_encrypted` or `isEncrypted`). Mechanism only; keys not documented.
+
+## Request (decrypted)
+Wire envelope (encrypted or plaintext JSON string in `payload`). Table below is the **decrypted** DTO bound after the filter.
+
+| Field (JSON) | Type | Req. | Format / length / enum | Enforced by | Meaning |
+|---|---|---|---|---|---|
+| `payload` | string | Y | AES ciphertext or JSON | `RequestModel` | whole-body envelope |
+
+**Decrypted type:** `ProductProvisionRequest`
+
+| Field (JSON) | Type | Req. | Format / length / enum | Enforced by | Meaning |
+|---|---|---|---|---|---|
+| `requestingOrganisationTransactionReference` | `string` | N | — | shape only | requestingOrganisationTransactionReference |
+| `requestId` | `string?` | N | — | shape only | requestId |
+| `iPInfo` | `string` | N | — | shape only | iPInfo |
+| `geoCode` | `string` | N | — | shape only | geoCode |
+| `useCaseName` | `string` | N | — | shape only | useCaseName |
+| `channel` | `string` | N | — | shape only | channel |
+| `appVersion` | `string` | N | — | shape only | appVersion |
+| `languageCode` | `string` | N | — | shape only | languageCode |
+| `deviceId` | `string` | N | — | shape only | deviceId |
+| `deviceMaker` | `string` | N | — | shape only | deviceMaker |
+| `oS` | `string` | N | — | shape only | oS |
+| `accessToken` | `string` | N | — | shape only | accessToken |
+| `consumerID` | `string` | N | — | shape only | consumerID |
+| `country` | `string` | N | — | shape only | country |
+| `channelId` | `string` | N | — | shape only | channelId |
+| `payingCustomerID` | `string` | N | — | shape only | payingCustomerID |
+| `fulfillmentCustomerID` | `string` | N | — | shape only | fulfillmentCustomerID |
+| `productId` | `string` | N | — | shape only | productId |
+| `desiredPaymentMethod` | `string` | N | — | shape only | desiredPaymentMethod |
+| `externalTransactionID` | `string` | N | — | shape only | externalTransactionID |
+| `comment` | `string` | N | — | shape only | comment |
+| `additionalParameters` | `List<ParameterType>` | N | — | shape only | additionalParameters |
+
+Headers / route / query params: none parsed beyond action signature `[('msg', 'RequestModel')]`
+
+Sample (synthetic):
+```json
+{"payload": "<ciphertext-or-json>"}
+# decrypted payload:
+{
+  "requestingOrganisationTransactionReference": "<string>",
+  "requestId": "<string>",
+  "iPInfo": "<encrypted-pin>",
+  "geoCode": "<string>",
+  "useCaseName": "<string>",
+  "channel": "<string>",
+  "appVersion": "<string>",
+  "languageCode": "<string>",
+  "deviceId": "<device-id>",
+  "deviceMaker": "<string>",
+  "oS": "<string>",
+  "accessToken": "<jwt>",
+  "consumerID": "<string>",
+  "country": "<string>",
+  "channelId": "<string>",
+  "payingCustomerID": "<string>",
+  "fulfillmentCustomerID": "<string>",
+  "productId": "<string>",
+  "desiredPaymentMethod": "<string>",
+  "externalTransactionID": "<string>",
+  "comment": "<string>",
+  "additionalParameters": []
+}
+```
+
+## Checks & validations (execution order)
+| # | Check | On failure | Rule ID | Evidence |
+|---|---|---|---|---|
+| 1 | Decrypt `payload` with AES when config `is_encrypted`/`isEncrypted` is true; else JSON-deserialize | Filter stores raw string; later cast may fail → 500 | — | `TZ-Tigo-SuperApp-GSM/TZTigoSuperAppGSM/Controllers/GSMBundlesController.cs › GSMBundlesController.ProductProvisionV2` |
+| 2 | `status.ToLower(CultureInfo.CurrentCulture` | branch / error envelope | — | `TZ-Tigo-SuperApp-GSM/TZTigoSuperAppGSM/Controllers/GSMBundlesController.cs › GSMBundlesController.ProductProvisionV2` |
+
+## Internal call chain
+1. Client POST `/api/GSMBundles/ProductProvisionV2` with `{ payload }` envelope.
+2. Encryption filter decrypts payload into `ProductProvisionRequest` on `HttpContext.Items['modeldata']`.
+3. `GSMBundlesController.ProductProvisionV2` runs (`TZ-Tigo-SuperApp-GSM/TZTigoSuperAppGSM/Controllers/GSMBundlesController.cs`).
+4. Calls `bundleService.ProductProvision`.
+5. Calls `xmlDoc.LoadXml`.
+6. Calls `xmlDoc.SelectSingleNode`.
+7. Calls `xmlDoc.SelectSingleNode`.
+8. Calls `xmlDoc.SelectSingleNode`.
+9. Calls `xmlDoc.SelectSingleNode`.
+10. Calls `status.ToLower`.
+11. Returns via `ApiResponseHandler.CreateResponse` or action result; filter may AES-encrypt whole response.
+
+```mermaid
+sequenceDiagram
+  participant App
+  participant EncFilter
+  App->>EncFilter: POST payload envelope
+  EncFilter->>EncFilter: AES decrypt payload
+  EncFilter->>GSMBundlesController: Items['modeldata']
+  participant GSMBundlesController
+  GSMBundlesController->>bundleService: ProductProvision()
+  GSMBundlesController->>xmlDoc: LoadXml()
+  GSMBundlesController->>xmlDoc: SelectSingleNode()
+  GSMBundlesController->>status: ToLower()
+  GSMBundlesController->>_responseHandler: CreateResponse()
+```
+
+## Downstream
+| Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
+|---|---|---|---|---|
+| 1 | BE-API-CONFIG (ResponseCodeApp get-response-code-details) | Sync | after handler | responseCode, language, channel, optional service/method |
+
+## Data touched
+| Entity / table / SP | R/W | Notes |
+|---|---|---|
+| see service `data-model.md` | mixed | not fully attributed per action |
+
+## Response (decrypted)
+| Field (JSON) | Type | Always / when | Meaning |
+|---|---|---|---|
+| `success` | boolean | always | handler outcome |
+| `responseCode` | string | always | mapped via CONFIG when handler used |
+| `transactionStatus` | string | success | mapped message |
+| `errorDescription` | string | failure | mapped or static |
+| `appVersionInfo` | string | often | app version hint |
+| `responseData` | object | success | action-specific |
+
+Sample (synthetic):
+```json
+{
+  "success": true,
+  "responseCode": "<code>",
+  "transactionStatus": "<message>",
+  "appVersionInfo": "<version>",
+  "responseData": {}
+}
+```
+
+## Errors
+| BE code | HTTP | ID | Condition | Message key/text | Retryable |
+|---|---|---|---|---|---|
+| 500 | 500 | BE-ERR-GSM-001 | unhandled exception in action | Internal Server Error | yes (idempotent GETs only) |
+| (session) | 410 | BE-ERR-GSM-002 | invalid/expired `X-User-Session` | session filter envelope | no (re-auth) |
+| mapped | 400/200/201 | — | handler `BaseResponse.success` | CONFIG response-code catalogue | depends |
+
+## Side effects
+- Possible audit publish via RabbitMQ `IAuditLogsService` in encryption filter (service-dependent).
+- Possible FCM via `IFCMService` when the handler calls it.
+
+## Business rules (links)
+- Session validity: `BE-BR-GSM-001` (when session filter present).
+
+## Config keys
+- `is_encrypted` or `isEncrypted` (toggle)
+- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
+- `TokenKey` (JWT validation; value not recorded)
+
+## Evidence
+- `TZ-Tigo-SuperApp-GSM/TZTigoSuperAppGSM/Controllers/GSMBundlesController.cs › GSMBundlesController.ProductProvisionV2` @ `13fe724`
+- Decrypted DTO `ProductProvisionRequest` properties from type index.
+
+## Open questions
+- Public path may be rewritten by an external gateway not in this repo set.

@@ -1,0 +1,17 @@
+---
+kb_section: backend
+type: service
+ids: [BE-SVC-WALLET]
+service: WALLET
+repo: TZ-Tigo-SuperApp-Wallet
+repo_ref: cursor/superapp-backend-documentation-cf53
+repo_sha: 27737b1
+updated: 2026-10-05
+confidence: partial
+---
+
+# Events — WALLET
+
+| ID | Name | How |
+|---|---|---|
+| BE-EVT-WALLET-001 | Audit / FCM publish (if helper called) | RabbitMQ helper copied in-repo |

@@ -1,0 +1,19 @@
+---
+kb_section: backend
+type: service
+ids: [BE-SVC-NOTSCH]
+service: NOTSCH
+repo: TZ-Tigo-SuperApp-Notification-Scheduler
+repo_ref: cursor/superapp-backend-documentation-cf53
+repo_sha: 72838eb
+updated: 2026-10-05
+confidence: partial
+---
+
+# Integrations — NOTSCH
+
+Hosts/secrets omitted.
+
+| ID | Name | How | Evidence |
+|---|---|---|---|
+| — | none parsed | — | — |
