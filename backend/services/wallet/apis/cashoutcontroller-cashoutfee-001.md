@@ -60,7 +60,9 @@ Wire envelope (encrypted or plaintext JSON string in `payload`). Table below is 
 | `country` | `string` | N | — | shape only | country |
 | `correlationID` | `string` | N | — | shape only | correlationID |
 | `msisdn` | `string` | N | — | shape only | msisdn |
-| `creditParty` | `creditParty` | N | — | shape only | creditParty |
+| `creditParty` | object `{ key, value }` | N | nested (not array, not string) | SOAP uses `creditParty.value` as agent/target id | cash-out destination |
+| `creditParty.key` | `string?` | N | — | shape | party key |
+| `creditParty.value` | `string?` | Y (for SOAP) | — | `CashOutService.CashOutFee` | agent / credit party id |
 | `amount` | `string` | N | — | shape only | amount |
 | `transactionType` | `string` | N | — | shape only | transactionType |
 | `shortCode` | `string` | N | — | shape only | shortCode |
@@ -90,7 +92,7 @@ Sample (synthetic):
   "country": "<string>",
   "correlationID": "<string>",
   "msisdn": "255XXXXXXXXX",
-  "creditParty": "<string>",
+  "creditParty": { "key": "<key>", "value": "<agent-id>" },
   "amount": "<amount>",
   "transactionType": "<string>",
   "shortCode": "<string>"
@@ -100,9 +102,11 @@ Sample (synthetic):
 ## Checks & validations (execution order)
 | # | Check | On failure | Rule ID | Evidence |
 |---|---|---|---|---|
-| 1 | Decrypt `payload` with AES when config `is_encrypted`/`isEncrypted` is true; else JSON-deserialize | Filter stores raw string; later cast may fail → 500 | — | `TZ-Tigo-SuperApp-Wallet/TZTigoSuperAppWallet/Controllers/CashOutController.cs › CashOutController.CashOutFee` |
-| 2 | Validate `X-User-Session` JWT (`TokenKey`) then Redis/DB token | HTTP 410 envelope | BE-BR-WALLET-001 | `TZ-Tigo-SuperApp-Wallet › SessionValidationFilter` |
-| 3 | `response.code.ToLower(` | branch / error envelope | — | `TZ-Tigo-SuperApp-Wallet/TZTigoSuperAppWallet/Controllers/CashOutController.cs › CashOutController.CashOutFee` |
+| 1 | Decrypt `payload` when `isEncrypted` else JSON | filter/cast fail → 500 | — | `TZ-Tigo-SuperApp-Wallet/TZTigoSuperAppWallet/Controllers/CashOutController.cs › CashOutController.CashOutFee` |
+| 2 | `X-User-Session` JWT (`TokenKey`) + Redis/DB | HTTP 410 | BE-BR-WALLET-001 | `TZ-Tigo-SuperApp-Wallet › SessionValidationFilter` |
+| 3 | SOAP CalculateFee POST (`CashOutFee`); PIN in SOAP is hard-coded `"0000"` | HTTP/SOAP error | BE-BR-WALLET-002 | `TZ-Tigo-SuperApp-Wallet/TZTigoSuperAppWallet/Services/CashOutService.cs › CashOutService.CashOutFee` |
+| 4 | Success iff `response.code.ToLower() == "calculatefee-3031-0000-s"` | fail envelope with SOAP status/code/description | BE-BR-WALLET-002 | same |
+| 5 | Unhandled | HTTP 500 | BE-ERR-WALLET-001 | controller catch |
 
 ## Internal call chain
 1. Client POST `/api/CashOut/cashOutFee` with `{ payload }` envelope.
@@ -131,7 +135,8 @@ sequenceDiagram
 ## Downstream
 | Order | Target (BE-API / BE-INT / BE-EVT) | Sync/Async | Condition | Sent / used fields |
 |---|---|---|---|---|
-| 1 | BE-API-CONFIG (ResponseCodeApp get-response-code-details) | Sync | after handler | responseCode, language, channel, optional service/method |
+| 1 | MMP SOAP CalculateFee via config key `CashOutFee` | Sync | always | msisdn, amount, `creditParty.value`, shortCode, consumerID; auth keys `Tanzania:Username`, `Tanzania:Password`, `Tanzania:ConsumerID` |
+| 2 | BE-API-CONFIG ResponseCodeApp | Sync | after handler | responseCode, language, channel |
 
 ## Data touched
 | Entity / table / SP | R/W | Notes |
@@ -174,9 +179,8 @@ Sample (synthetic):
 - Session validity: `BE-BR-WALLET-001` (when session filter present).
 
 ## Config keys
-- `is_encrypted` or `isEncrypted` (toggle)
-- `responseChanel`, `serviceName` / `Tanzania:serviceName` (message mapping)
-- `TokenKey` (JWT validation; value not recorded)
+- `isEncrypted`, `TokenKey`, `responseChanel`, `serviceName`
+- SOAP URL key `CashOutFee`; `Tanzania:Username`, `Tanzania:Password`, `Tanzania:ConsumerID`
 
 ## Evidence
 - `TZ-Tigo-SuperApp-Wallet/TZTigoSuperAppWallet/Controllers/CashOutController.cs › CashOutController.CashOutFee` @ `27737b1`
